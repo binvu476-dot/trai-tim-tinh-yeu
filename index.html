@@ -1,424 +1,128 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10051b">
 <title>Vũ ❤️ Quyên</title>
-
 <style>
-:root {
-  --pink: #ff73bc;
-  --light: #ffe0f1;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(ellipse at 50% 43%,
-      #35102f 0%, #14091e 35%, #05030c 75%),
-    #05030c;
-  font-family: Arial, sans-serif;
-}
-
-.scene {
-  position: relative;
-  width: min(96vw, 720px);
-  aspect-ratio: 1;
-  perspective: 1000px;
-}
-
-.aura {
-  position: absolute;
-  width: 65%;
-  height: 60%;
-  left: 17.5%;
-  top: 17%;
-  border-radius: 50%;
-  background: #fd208f;
-  opacity: .14;
-  filter: blur(85px);
-  animation: aura 3s ease-in-out infinite alternate;
-}
-
-.tilt {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transition: transform .2s ease-out;
-}
-
-.heart {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  filter: drop-shadow(0 0 15px #ff2a96);
-  animation: beat 2.4s ease-in-out infinite;
-}
-
-.heart-shape {
-  fill: none;
-  stroke: #ff3c9e;
-  stroke-width: 1.5;
-  opacity: .27;
-  filter: drop-shadow(0 0 12px #ff69b4);
-}
-
-.heart-text {
-  font-family: Arial, sans-serif;
-  font-weight: 700;
-  fill: #ffc5e4;
-  paint-order: stroke;
-  stroke: #ff459f;
-  stroke-width: .35px;
-  text-shadow:
-    0 0 4px #ff66b1,
-    0 0 9px #ff3299;
-}
-
-.outer {
-  font-size: 17px;
-}
-
-.middle {
-  font-size: 15px;
-  fill: #ff91c9;
-  opacity: .95;
-}
-
-.inner {
-  font-size: 13px;
-  fill: #ffd6eb;
-  opacity: .85;
-}
-
-.center {
-  position: absolute;
-  left: 50%;
-  top: 51%;
-  width: 65%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-  animation: float 4s ease-in-out infinite;
-}
-
-.center .mini {
-  font-size: clamp(11px, 2vw, 14px);
-  letter-spacing: 4px;
-  color: #ffc4e3;
-  text-transform: uppercase;
-  text-shadow: 0 0 10px #ff3d9c;
-}
-
-.center h1 {
-  margin: 12px 0 5px;
-  font-size: clamp(30px, 6vw, 49px);
-  font-family: Georgia, serif;
-  font-style: italic;
-  color: #ffe2f1;
-  text-shadow:
-    0 0 5px #fff,
-    0 0 15px #ff66b5,
-    0 0 35px #ff1688;
-}
-
-.center .message {
-  margin: 8px 0;
-  font-size: clamp(13px, 2.8vw, 19px);
-  font-weight: bold;
-  color: #ffb6dd;
-  text-shadow: 0 0 10px #ff3999;
-}
-
-.center .symbol {
-  margin-top: 8px;
-  font-size: 33px;
-  color: #ff74b8;
-  text-shadow: 0 0 22px #ff0080;
-  animation: beat 1.5s ease-in-out infinite;
-}
-
-.spark {
-  position: absolute;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow:
-    0 0 8px #fff,
-    0 0 18px #ff55b0;
-  pointer-events: none;
-  animation: twinkle var(--duration) ease-in-out infinite;
-  animation-delay: var(--delay);
-}
-
-.floating-heart {
-  position: absolute;
-  bottom: -30px;
-  color: #ff81c2;
-  pointer-events: none;
-  text-shadow: 0 0 12px #ff2c97;
-  opacity: 0;
-  animation: rise var(--time) linear infinite;
-  animation-delay: var(--delay);
-}
-
-@keyframes beat {
-  0%, 100% { transform: scale(1); }
-  45% { transform: scale(1.035); }
-  60% { transform: scale(1.01); }
-  75% { transform: scale(1.045); }
-}
-
-@keyframes aura {
-  from { opacity: .12; transform: scale(.9); }
-  to { opacity: .27; transform: scale(1.2); }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translate(-50%, -50%) translateY(0);
-  }
-  50% {
-    transform: translate(-50%, -50%) translateY(-8px);
-  }
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: .15; transform: scale(.6); }
-  50% { opacity: 1; transform: scale(1.5); }
-}
-
-@keyframes rise {
-  0% {
-    transform: translateY(0) rotate(-15deg);
-    opacity: 0;
-  }
-  15% { opacity: .8; }
-  85% { opacity: .6; }
-  100% {
-    transform: translateY(-110vh) rotate(25deg);
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .heart,
-  .center,
-  .spark,
-  .floating-heart {
-    animation-duration: 8s;
-  }
-}
-@media (hover: none) and (pointer: coarse) {
-  .tilt {
-    animation: phoneRotate 6s ease-in-out infinite;
-  }
-
-  .heart {
-    animation: beat 2s ease-in-out infinite;
-  }
-}
-
-@keyframes phoneRotate {
-  0%, 100% {
-    transform: rotateY(-12deg) rotateX(5deg);
-  }
-  50% {
-    transform: rotateY(12deg) rotateX(-5deg);
-  }
-}
+:root{--pink:#ff73bc;--light:#ffe0f1}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%}
+body{min-height:100svh;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 43%,#35102f 0%,#14091e 38%,#05030c 80%);font-family:Arial,sans-serif;color:#ffe0f1}
+.scene{position:relative;width:min(98vw,720px,85svh);aspect-ratio:1;perspective:1000px;isolation:isolate}
+.aura{position:absolute;inset:20%;border-radius:50%;background:#fd208f;opacity:.24;filter:blur(65px);animation:aura 3s ease-in-out infinite alternate;pointer-events:none}
+.tilt{position:absolute;inset:0;transform-style:preserve-3d;animation:phoneRotate 7s ease-in-out infinite;will-change:transform}
+.heart{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 0 12px #ff2a96);animation:beat 2.2s ease-in-out infinite;transform-origin:center;will-change:transform}
+.heart-shape{fill:none;stroke:#ff3c9e;stroke-width:1.5;opacity:.35}
+.heart-text{font-family:Arial,sans-serif;font-weight:700;fill:#ffc5e4;stroke:#ff459f;stroke-width:.2px;paint-order:stroke;text-shadow:0 0 3px #ff66b1,0 0 7px #ff3299}
+.outer{font-size:17px}.middle{font-size:15px;fill:#ff91c9}.inner{font-size:13px;fill:#ffd6eb}
+.center{position:absolute;left:50%;top:51%;width:56%;text-align:center;pointer-events:none;animation:float 3.5s ease-in-out infinite;transform:translate(-50%,-50%)}
+.center .mini{font-size:clamp(9px,2vw,14px);letter-spacing:3px;color:#ffc4e3;text-shadow:0 0 10px #ff3d9c}
+.center h1{margin:10px 0 5px;font-size:clamp(25px,6vw,49px);font-family:Georgia,serif;font-style:italic;color:#ffe2f1;text-shadow:0 0 5px #fff,0 0 15px #ff66b5,0 0 30px #ff1688}
+.center .message{margin:7px 0;font-size:clamp(12px,2.8vw,19px);font-weight:bold;color:#ffb6dd;text-shadow:0 0 10px #ff3999}
+.center .symbol{margin-top:7px;font-size:33px;color:#ff74b8;text-shadow:0 0 22px #ff0080;animation:beat 1.3s ease-in-out infinite}
+.spark{position:absolute;border-radius:50%;background:white;box-shadow:0 0 7px white,0 0 14px #ff55b0;pointer-events:none;animation:twinkle var(--duration) ease-in-out infinite;animation-delay:var(--delay)}
+.floating-heart{position:fixed;bottom:-35px;color:#ff81c2;pointer-events:none;text-shadow:0 0 12px #ff2c97;opacity:0;animation:rise var(--time) linear infinite;animation-delay:var(--delay);z-index:0}
+.scene{z-index:1}
+.controls{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:5px}
+.toggle{background:#42162fd9;border:1px solid #ff80bf;color:#ffe8f4;padding:10px 18px;border-radius:99px;font:600 13px Arial,sans-serif;box-shadow:0 0 15px #ff3e8b55;cursor:pointer}
+.status{font:11px Arial,sans-serif;color:#f6c3e0;opacity:.78;white-space:nowrap}
+@keyframes beat{0%,100%{transform:scale(1)}35%{transform:scale(1.055)}55%{transform:scale(1.01)}72%{transform:scale(1.045)}}
+@keyframes aura{from{opacity:.14;transform:scale(.88)}to{opacity:.33;transform:scale(1.18)}}
+@keyframes float{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-9px)}}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.6)}}
+@keyframes rise{0%{transform:translateY(0) rotate(-15deg);opacity:0}15%{opacity:.8}85%{opacity:.6}100%{transform:translateY(-115svh) rotate(25deg);opacity:0}}
+@keyframes phoneRotate{0%,100%{transform:rotateY(-11deg) rotateX(4deg)}50%{transform:rotateY(11deg) rotateX(-4deg)}}
+@media(max-width:600px){.scene{width:min(100vw,470px,74svh)}.aura{filter:blur(32px)}.heart{filter:drop-shadow(0 0 8px #ff2a96)}.center{width:53%}.center h1{font-size:clamp(19px,6vw,30px);margin:6px 0}.center .mini{font-size:9px;letter-spacing:1.5px}.center .message{font-size:clamp(9px,2.65vw,13px);margin:4px 0}.center .symbol{font-size:25px;margin-top:3px}}
+/* Khi Android bật giảm chuyển động, dùng chuyển động nhẹ hơn thay vì ép chạy mạnh. */
+@media(prefers-reduced-motion:reduce){.tilt{animation:none}.heart{animation:beat 5s ease-in-out infinite}.center{animation:none}.floating-heart{animation-duration:18s}}
+body.paused .heart,body.paused .tilt,body.paused .center,body.paused .aura,body.paused .spark,body.paused .floating-heart,body.paused .symbol{animation-play-state:paused!important}
 </style>
 </head>
-
 <body>
-
 <div class="scene" id="scene">
   <div class="aura"></div>
-
   <div class="tilt" id="tilt">
-    <svg class="heart" viewBox="0 0 700 700"
-         xmlns="http://www.w3.org/2000/svg">
-
-      <defs>
-        <path id="path1"/>
-        <path id="path2"/>
-        <path id="path3"/>
-      </defs>
-
-      <!-- Ba đường viền trái tim -->
-      <use href="#path1" class="heart-shape"/>
-      <use href="#path2" class="heart-shape"/>
-      <use href="#path3" class="heart-shape"/>
-
-      <!-- Chữ nằm dọc đường viền -->
-      <text class="heart-text outer">
-        <textPath href="#path1" id="text1"></textPath>
-      </text>
-
-      <text class="heart-text middle">
-        <textPath href="#path2" id="text2"></textPath>
-      </text>
-
-      <text class="heart-text inner">
-        <textPath href="#path3" id="text3"></textPath>
-      </text>
+    <svg class="heart" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ba trái tim tạo bằng dòng chữ Vũ yêu vợ Quyên nhìu lắm">
+      <defs><path id="path1"/><path id="path2"/><path id="path3"/></defs>
+      <use href="#path1" class="heart-shape"/><use href="#path2" class="heart-shape"/><use href="#path3" class="heart-shape"/>
+      <text class="heart-text outer"><textPath href="#path1" id="text1"></textPath></text>
+      <text class="heart-text middle"><textPath href="#path2" id="text2"></textPath></text>
+      <text class="heart-text inner"><textPath href="#path3" id="text3"></textPath></text>
     </svg>
   </div>
-
-  <!-- Chữ chính giữa -->
   <div class="center">
     <div class="mini">Forever Love</div>
-    <h1>Vũ & Quyên</h1>
-    <div class="message">
-      Vũ yêu vợ Quyên
-    </div>
-    <div class="message">
-      nhìu lắm &lt;3
-    </div>
+    <h1>Vũ &amp; Quyên</h1>
+    <div class="message">Vũ yêu vợ Quyên</div>
+    <div class="message">nhìu lắm &lt;3</div>
     <div class="symbol">♥</div>
   </div>
 </div>
-
+<div class="controls"><button class="toggle" id="toggle" type="button">⏸ Tạm dừng hiệu ứng</button><span class="status" id="status">Bản Android 4.0 · Hiệu ứng đang chạy</span></div>
 <script>
-const message = "Vũ yêu vợ Quyên nhìu lắm <3";
-const scene = document.getElementById("scene");
-
-// Hàm tạo hình trái tim chuẩn
-function createHeart(scale) {
-  const points = [];
-
-  for (let i = 0; i <= 500; i++) {
-    const t = (i / 500) * Math.PI * 2;
-
-    const x = 16 * Math.pow(Math.sin(t), 3);
-
-    const y =
-      13 * Math.cos(t)
-      - 5 * Math.cos(2 * t)
-      - 2 * Math.cos(3 * t)
-      - Math.cos(4 * t);
-
-    const px = 350 + x * 14 * scale;
-    const py = 350 - y * 14 * scale;
-
-    points.push(
-      `${i === 0 ? "M" : "L"} ${px.toFixed(2)} ${py.toFixed(2)}`
-    );
+'use strict';
+const message='Vũ yêu vợ Quyên nhìu lắm <3';
+const scene=document.getElementById('scene');
+function createHeart(scale){
+  const points=[];
+  for(let i=0;i<=500;i++){
+    const t=i/500*Math.PI*2;
+    const x=16*Math.sin(t)**3;
+    const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+    const px=350+x*14*scale,py=350-y*14*scale;
+    points.push((i?'L ':'M ')+px.toFixed(2)+' '+py.toFixed(2));
   }
-
-  return points.join(" ") + " Z";
+  return points.join(' ')+' Z';
 }
-
-// Đo chữ để không chồng lên nhau
-const canvas = document.createElement("canvas");
-const ctx = canvas.getContext("2d");
-
-function addText(pathId, textId, scale, size) {
-  const path = document.getElementById(pathId);
-  const textPath = document.getElementById(textId);
-
-  path.setAttribute("d", createHeart(scale));
-
-  const length = path.getTotalLength();
-
-  ctx.font = `bold ${size}px Arial`;
-
-  const phrase = message + "   ♡   ";
-  const phraseWidth = ctx.measureText(phrase).width;
-
-  // Số câu vừa với chu vi trái tim
-  const count = Math.max(
-    1,
-    Math.floor((length - 35) / phraseWidth)
-  );
-
-  textPath.textContent = phrase.repeat(count);
-
-  // Chỉ nới khoảng cách chữ, không kéo méo chữ
-  textPath.setAttribute("textLength", length - 30);
-  textPath.setAttribute("lengthAdjust", "spacing");
+const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');
+function addText(pathId,textId,scale,size){
+  const path=document.getElementById(pathId),textPath=document.getElementById(textId);
+  path.setAttribute('d',createHeart(scale));
+  const length=path.getTotalLength();
+  ctx.font=`bold ${size}px Arial`;
+  const phrase=message+'   ♡   ';
+  const count=Math.max(1,Math.floor((length-35)/ctx.measureText(phrase).width));
+  textPath.textContent=phrase.repeat(count);
+  textPath.setAttribute('textLength',length-30);
+  textPath.setAttribute('lengthAdjust','spacing');
 }
-
-// Ba lớp chữ rõ ràng, không đè lên nhau
-addText("path1", "text1", 1.0, 17);
-addText("path2", "text2", 0.82, 15);
-addText("path3", "text3", 0.65, 13);
-
-// Tạo sao lấp lánh
-for (let i = 0; i < 65; i++) {
-  const star = document.createElement("span");
-  star.className = "spark";
-
-  const size = Math.random() * 2.5 + 1;
-
-  star.style.width = size + "px";
-  star.style.height = size + "px";
-  star.style.left = Math.random() * 100 + "%";
-  star.style.top = Math.random() * 100 + "%";
-
-  star.style.setProperty(
-    "--duration",
-    (Math.random() * 3 + 1.5) + "s"
-  );
-
-  star.style.setProperty(
-    "--delay",
-    (Math.random() * -5) + "s"
-  );
-
+addText('path1','text1',1,17);
+addText('path2','text2',.82,15);
+addText('path3','text3',.65,13);
+const isMobile=window.matchMedia('(max-width:600px)').matches;
+for(let i=0;i<(isMobile?35:65);i++){
+  const star=document.createElement('span');star.className='spark';
+  const size=Math.random()*2.5+1;
+  star.style.width=star.style.height=size+'px';
+  star.style.left=Math.random()*100+'%';star.style.top=Math.random()*100+'%';
+  star.style.setProperty('--duration',Math.random()*3+1.5+'s');
+  star.style.setProperty('--delay',Math.random()*-5+'s');
   scene.appendChild(star);
 }
-
-// Trái tim nhỏ bay lên
-for (let i = 0; i < 16; i++) {
-  const smallHeart = document.createElement("span");
-  smallHeart.className = "floating-heart";
-  smallHeart.textContent = "♥";
-
-  smallHeart.style.left = Math.random() * 100 + "%";
-  smallHeart.style.fontSize =
-    (Math.random() * 12 + 9) + "px";
-
-  smallHeart.style.setProperty(
-    "--time",
-    (Math.random() * 7 + 7) + "s"
-  );
-
-  smallHeart.style.setProperty(
-    "--delay",
-    (Math.random() * -14) + "s"
-  );
-
-  document.body.appendChild(smallHeart);
+for(let i=0;i<(isMobile?14:18);i++){
+  const small=document.createElement('span');small.className='floating-heart';small.textContent='♥';
+  small.style.left=Math.random()*100+'%';small.style.fontSize=Math.random()*12+9+'px';
+  small.style.setProperty('--time',Math.random()*7+7+'s');
+  small.style.setProperty('--delay',Math.random()*-14+'s');
+  document.body.appendChild(small);
 }
-
-// Hiệu ứng chiều sâu khi di chuột
-const tilt = document.getElementById("tilt");
-
-scene.addEventListener("mousemove", (e) => {
-  const rect = scene.getBoundingClientRect();
-
-  const x = (e.clientX - rect.left) / rect.width - 0.5;
-  const y = (e.clientY - rect.top) / rect.height - 0.5;
-
-  tilt.style.transform = `
-    rotateY(${x * 8}deg)
-    rotateX(${-y * 8}deg)
-  `;
-});
-
-scene.addEventListener("mouseleave", () => {
-  tilt.style.transform = "rotateX(0deg) rotateY(0deg)";
+const tilt=document.getElementById('tilt');
+const hasMouse=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+if(hasMouse){
+  scene.addEventListener('mousemove',e=>{
+    const r=scene.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    tilt.style.animation='none';tilt.style.transform=`rotateY(${x*12}deg) rotateX(${-y*12}deg)`;
+  });
+  scene.addEventListener('mouseleave',()=>{tilt.style.transform='';tilt.style.animation='phoneRotate 7s ease-in-out infinite'});
+}
+const toggle=document.getElementById('toggle'),status=document.getElementById('status');
+toggle.addEventListener('click',()=>{
+  const stopped=document.body.classList.toggle('paused');
+  toggle.textContent=stopped?'▶ Bật hiệu ứng':'⏸ Tạm dừng hiệu ứng';
+  status.textContent=stopped?'Bản Android 4.0 · Đã tạm dừng':'Bản Android 4.0 · Hiệu ứng đang chạy';
 });
 </script>
-
 </body>
 </html>
