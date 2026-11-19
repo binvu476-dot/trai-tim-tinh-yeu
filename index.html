@@ -16,17 +16,23 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
   min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   display: grid;
   place-items: center;
   background:
     radial-gradient(ellipse at 50% 43%,
-      #35102f 0%, #14091e 35%, #05030c 75%),
-    #05030c;
+      #35102f 0%, #14091e 35%, #05030c 75%);
   font-family: Arial, sans-serif;
+  touch-action: pan-y;
 }
 
 .scene {
@@ -34,6 +40,7 @@ body {
   width: min(96vw, 720px);
   aspect-ratio: 1;
   perspective: 1000px;
+  isolation: isolate;
 }
 
 .aura {
@@ -45,8 +52,9 @@ body {
   border-radius: 50%;
   background: #fd208f;
   opacity: .14;
-  filter: blur(85px);
+  filter: blur(70px);
   animation: aura 3s ease-in-out infinite alternate;
+  pointer-events: none;
 }
 
 .tilt {
@@ -60,7 +68,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 0 15px #ff2a96);
+  filter: drop-shadow(0 0 12px #ff2a96);
   animation: beat 2.4s ease-in-out infinite;
 }
 
@@ -69,19 +77,19 @@ body {
   stroke: #ff3c9e;
   stroke-width: 1.5;
   opacity: .27;
-  filter: drop-shadow(0 0 12px #ff69b4);
+  filter: drop-shadow(0 0 8px #ff69b4);
 }
 
 .heart-text {
   font-family: Arial, sans-serif;
   font-weight: 700;
   fill: #ffc5e4;
-  paint-order: stroke;
   stroke: #ff459f;
-  stroke-width: .35px;
+  stroke-width: .25px;
+  paint-order: stroke;
   text-shadow:
-    0 0 4px #ff66b1,
-    0 0 9px #ff3299;
+    0 0 3px #ff66b1,
+    0 0 7px #ff3299;
 }
 
 .outer {
@@ -91,20 +99,18 @@ body {
 .middle {
   font-size: 15px;
   fill: #ff91c9;
-  opacity: .95;
 }
 
 .inner {
   font-size: 13px;
   fill: #ffd6eb;
-  opacity: .85;
 }
 
 .center {
   position: absolute;
   left: 50%;
   top: 51%;
-  width: 65%;
+  width: 58%;
   transform: translate(-50%, -50%);
   text-align: center;
   pointer-events: none;
@@ -112,28 +118,27 @@ body {
 }
 
 .center .mini {
-  font-size: clamp(11px, 2vw, 14px);
-  letter-spacing: 4px;
+  font-size: clamp(10px, 2vw, 14px);
+  letter-spacing: 3px;
   color: #ffc4e3;
-  text-transform: uppercase;
   text-shadow: 0 0 10px #ff3d9c;
 }
 
 .center h1 {
   margin: 12px 0 5px;
-  font-size: clamp(30px, 6vw, 49px);
+  font-size: clamp(26px, 6vw, 49px);
   font-family: Georgia, serif;
   font-style: italic;
   color: #ffe2f1;
   text-shadow:
     0 0 5px #fff,
     0 0 15px #ff66b5,
-    0 0 35px #ff1688;
+    0 0 30px #ff1688;
 }
 
 .center .message {
   margin: 8px 0;
-  font-size: clamp(13px, 2.8vw, 19px);
+  font-size: clamp(12px, 2.8vw, 19px);
   font-weight: bold;
   color: #ffb6dd;
   text-shadow: 0 0 10px #ff3999;
@@ -150,17 +155,17 @@ body {
 .spark {
   position: absolute;
   border-radius: 50%;
-  background: #fff;
+  background: white;
   box-shadow:
-    0 0 8px #fff,
-    0 0 18px #ff55b0;
+    0 0 7px white,
+    0 0 14px #ff55b0;
   pointer-events: none;
   animation: twinkle var(--duration) ease-in-out infinite;
   animation-delay: var(--delay);
 }
 
 .floating-heart {
-  position: absolute;
+  position: fixed;
   bottom: -30px;
   color: #ff81c2;
   pointer-events: none;
@@ -170,6 +175,7 @@ body {
   animation-delay: var(--delay);
 }
 
+/* Hiệu ứng tim đập */
 @keyframes beat {
   0%, 100% { transform: scale(1); }
   45% { transform: scale(1.035); }
@@ -177,11 +183,19 @@ body {
   75% { transform: scale(1.045); }
 }
 
+/* Ánh sáng neon */
 @keyframes aura {
-  from { opacity: .12; transform: scale(.9); }
-  to { opacity: .27; transform: scale(1.2); }
+  from {
+    opacity: .12;
+    transform: scale(.9);
+  }
+  to {
+    opacity: .3;
+    transform: scale(1.2);
+  }
 }
 
+/* Chữ chính giữa bay nhẹ */
 @keyframes float {
   0%, 100% {
     transform: translate(-50%, -50%) translateY(0);
@@ -191,11 +205,19 @@ body {
   }
 }
 
+/* Sao nhấp nháy */
 @keyframes twinkle {
-  0%, 100% { opacity: .15; transform: scale(.6); }
-  50% { opacity: 1; transform: scale(1.5); }
+  0%, 100% {
+    opacity: .15;
+    transform: scale(.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
 }
 
+/* Trái tim nhỏ bay */
 @keyframes rise {
   0% {
     transform: translateY(0) rotate(-15deg);
@@ -204,11 +226,66 @@ body {
   15% { opacity: .8; }
   85% { opacity: .6; }
   100% {
-    transform: translateY(-110vh) rotate(25deg);
+    transform: translateY(-110dvh) rotate(25deg);
     opacity: 0;
   }
 }
 
+/* 3D tự động cho điện thoại */
+@keyframes mobile3D {
+  0%, 100% {
+    transform: rotateY(-10deg) rotateX(4deg);
+  }
+  50% {
+    transform: rotateY(10deg) rotateX(-4deg);
+  }
+}
+
+/* Tối ưu cho điện thoại */
+@media (max-width: 600px) {
+  .scene {
+    width: min(100vw, 440px);
+  }
+
+  .tilt {
+    animation: mobile3D 6s ease-in-out infinite;
+    transition: none;
+  }
+
+  .aura {
+    filter: blur(40px);
+  }
+
+  .heart {
+    filter: drop-shadow(0 0 8px #ff2a96);
+  }
+
+  .center {
+    width: 55%;
+  }
+
+  .center h1 {
+    font-size: clamp(21px, 6vw, 30px);
+    margin: 6px 0;
+  }
+
+  .center .mini {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  .center .message {
+    font-size: clamp(10px, 2.7vw, 13px);
+    margin: 5px 0;
+  }
+
+  .center .symbol {
+    font-size: 25px;
+    margin-top: 4px;
+  }
+}
+
+/* Tôn trọng cài đặt giảm chuyển động */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation: none !important;
@@ -224,7 +301,8 @@ body {
   <div class="aura"></div>
 
   <div class="tilt" id="tilt">
-    <svg class="heart" viewBox="0 0 700 700"
+    <svg class="heart"
+         viewBox="0 0 700 700"
          xmlns="http://www.w3.org/2000/svg">
 
       <defs>
@@ -233,12 +311,12 @@ body {
         <path id="path3"/>
       </defs>
 
-      <!-- Ba đường viền trái tim -->
+      <!-- Viền 3 trái tim -->
       <use href="#path1" class="heart-shape"/>
       <use href="#path2" class="heart-shape"/>
       <use href="#path3" class="heart-shape"/>
 
-      <!-- Chữ nằm dọc đường viền -->
+      <!-- Chữ chạy theo đường viền -->
       <text class="heart-text outer">
         <textPath href="#path1" id="text1"></textPath>
       </text>
@@ -250,19 +328,15 @@ body {
       <text class="heart-text inner">
         <textPath href="#path3" id="text3"></textPath>
       </text>
+
     </svg>
   </div>
 
-  <!-- Chữ chính giữa -->
   <div class="center">
     <div class="mini">Forever Love</div>
-    <h1>Vũ & Quyên</h1>
-    <div class="message">
-      Vũ yêu vợ Quyên
-    </div>
-    <div class="message">
-      nhìu lắm &lt;3
-    </div>
+    <h1>Vũ &amp; Quyên</h1>
+    <div class="message">Vũ yêu vợ Quyên</div>
+    <div class="message">nhìu lắm &lt;3</div>
     <div class="symbol">♥</div>
   </div>
 </div>
@@ -271,7 +345,7 @@ body {
 const message = "Vũ yêu vợ Quyên nhìu lắm <3";
 const scene = document.getElementById("scene");
 
-// Hàm tạo hình trái tim chuẩn
+// Tạo hình trái tim
 function createHeart(scale) {
   const points = [];
 
@@ -297,7 +371,7 @@ function createHeart(scale) {
   return points.join(" ") + " Z";
 }
 
-// Đo chữ để không chồng lên nhau
+// Đặt chữ trên đường viền trái tim
 const canvas = document.createElement("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -314,7 +388,6 @@ function addText(pathId, textId, scale, size) {
   const phrase = message + "   ♡   ";
   const phraseWidth = ctx.measureText(phrase).width;
 
-  // Số câu vừa với chu vi trái tim
   const count = Math.max(
     1,
     Math.floor((length - 35) / phraseWidth)
@@ -322,18 +395,23 @@ function addText(pathId, textId, scale, size) {
 
   textPath.textContent = phrase.repeat(count);
 
-  // Chỉ nới khoảng cách chữ, không kéo méo chữ
   textPath.setAttribute("textLength", length - 30);
   textPath.setAttribute("lengthAdjust", "spacing");
 }
 
-// Ba lớp chữ rõ ràng, không đè lên nhau
 addText("path1", "text1", 1.0, 17);
 addText("path2", "text2", 0.82, 15);
 addText("path3", "text3", 0.65, 13);
 
 // Tạo sao lấp lánh
-for (let i = 0; i < 65; i++) {
+const isMobile = window.matchMedia(
+  "(max-width: 600px)"
+).matches;
+
+// Giảm số hạt trên điện thoại để chạy mượt
+const starCount = isMobile ? 35 : 65;
+
+for (let i = 0; i < starCount; i++) {
   const star = document.createElement("span");
   star.className = "spark";
 
@@ -357,13 +435,16 @@ for (let i = 0; i < 65; i++) {
   scene.appendChild(star);
 }
 
-// Trái tim nhỏ bay lên
-for (let i = 0; i < 16; i++) {
+// Tạo trái tim nhỏ bay lên
+const floatingCount = isMobile ? 12 : 16;
+
+for (let i = 0; i < floatingCount; i++) {
   const smallHeart = document.createElement("span");
   smallHeart.className = "floating-heart";
   smallHeart.textContent = "♥";
 
   smallHeart.style.left = Math.random() * 100 + "%";
+
   smallHeart.style.fontSize =
     (Math.random() * 12 + 9) + "px";
 
@@ -380,24 +461,40 @@ for (let i = 0; i < 16; i++) {
   document.body.appendChild(smallHeart);
 }
 
-// Hiệu ứng chiều sâu khi di chuột
+// Hiệu ứng 3D khi di chuột trên máy tính
 const tilt = document.getElementById("tilt");
 
-scene.addEventListener("mousemove", (e) => {
-  const rect = scene.getBoundingClientRect();
+const hasMouse = window.matchMedia(
+  "(hover: hover) and (pointer: fine)"
+).matches;
 
-  const x = (e.clientX - rect.left) / rect.width - 0.5;
-  const y = (e.clientY - rect.top) / rect.height - 0.5;
+if (hasMouse) {
+  scene.addEventListener("mousemove", (e) => {
+    const rect = scene.getBoundingClientRect();
 
-  tilt.style.transform = `
-    rotateY(${x * 8}deg)
-    rotateX(${-y * 8}deg)
-  `;
-});
+    const x =
+      (e.clientX - rect.left) / rect.width - 0.5;
 
-scene.addEventListener("mouseleave", () => {
-  tilt.style.transform = "rotateX(0deg) rotateY(0deg)";
-});
+    const y =
+      (e.clientY - rect.top) / rect.height - 0.5;
+
+    tilt.style.transform = `
+      rotateY(${x * 8}deg)
+      rotateX(${-y * 8}deg)
+    `;
+  });
+
+  scene.addEventListener("mouseleave", () => {
+    tilt.style.transform =
+      "rotateX(0deg) rotateY(0deg)";
+  });
+}
+
+// 3D tự động trên thiết bị cảm ứng màn hình lớn
+if (!hasMouse && !isMobile) {
+  tilt.style.animation =
+    "mobile3D 6s ease-in-out infinite";
+}
 </script>
 
 </body>
