@@ -132,6 +132,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
   <div class="controls" role="group" aria-label="Điều khiển hiệu ứng">
    <button class="control" id="musicButton" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">♫</span><span id="musicLabel">Bật nhạc</span></button>
    <button class="control" id="motionButton" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">◇</span><span id="motionLabel">Nghiêng 3D</span></button>
+   <button class="control" id="shakeButton" type="button" aria-pressed="false" title="Bật cảm biến lắc mạnh để trái tim xoay trục dọc"><span class="ico" aria-hidden="true">↝</span><span id="shakeLabel">Lắc xoay</span></button>
    <button class="control" id="qualityButton" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">✧</span><span id="qualityLabel">Chế độ nhẹ</span></button>
    <button class="control" id="pauseButton" type="button" aria-pressed="false"><span class="ico" id="pauseIcon" aria-hidden="true">Ⅱ</span><span id="pauseLabel">Tạm dừng</span></button>
   </div>
@@ -466,6 +467,12 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     pointer-events:none;
   }
   .spin-face.back { transform:rotateY(180deg); }
+  #shakeButton { display:none; }
+  @media (max-width:700px), (pointer:coarse) {
+    #shakeButton { display:flex; }
+    .controls { gap:2px; }
+    .controls .control { padding-left:2px; padding-right:2px; }
+  }
   .petal-fx {
     position:absolute;
     inset:0;
@@ -509,10 +516,8 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     const href = node.getAttribute('href');
     if (href && href.startsWith('#')) node.setAttribute('href', href + '-back');
   });
-  backTilt.querySelectorAll('[xlink\:href]').forEach(node => {
-    const href = node.getAttribute('xlink:href');
-    if (href && href.startsWith('#')) node.setAttribute('xlink:href', href + '-back');
-  });
+  // SVG gốc chỉ dùng href, không dùng xlink:href. Tránh selector sai cú pháp
+  // [xlink:href] làm cả module xoay bị dừng ngay khi tải trang.
 
   tilt.before(shell);
   shell.appendChild(frontFace);
@@ -794,20 +799,136 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     const dx=e.clientX-p.startX,dy=e.clientY-p.startY;
     const distance=Math.hypot(dx,dy);
     const totalTime=performance.now()-p.startAt;
-    // Chỉ vuốt NGANG đủ xa, có sự kiện di chuyển thực và tốc độ cao mới xoay.
-    // Click, double click, nhấn liên tục, kéo chậm và vuốt dọc đều không được tính.
-    if(p.travelEvents<1 || totalTime<24 || Math.abs(dx)<60 ||
-       distance<70 || Math.abs(dx)<Math.abs(dy)*1.3)return;
+    // Yêu cầu ĐỘ DỜI ngang thực sự và chuyển động nhanh, không đếm số lần click.
+    // Ngưỡng phù hợp cho vuốt tay ngắn trên điện thoại và kéo thả trên PC.
+    const minDx=isMobile()?42:52;
+    if(p.travelEvents<1 || totalTime<30 || totalTime>950 ||
+       Math.abs(dx)<minDx || distance<minDx+4 ||
+       Math.abs(dx)<Math.abs(dy)*1.15)return;
     const first=p.points[0],last=p.points[p.points.length-1];
-    const seconds=Math.max(.016,(last.t-first.t)/1000);
-    const speed=Math.hypot(last.x-first.x,last.y-first.y)/seconds;
-    if(speed<560)return;
-    spinNow(speed,Math.sign(dx));
+    const seconds=Math.max(.025,(last.t-first.t)/1000);
+    const recentSpeed=Math.abs(last.x-first.x)/seconds;
+    const avgSpeed=Math.abs(dx)/Math.max(.04,totalTime/1000);
+    // Cần có gia tốc rõ và tốc độ trung bình nhất định để tránh kéo chậm.
+    if(avgSpeed<230 || recentSpeed<315)return;
+    spinNow(Math.max(avgSpeed,recentSpeed),Math.sign(dx));
   },{passive:true});
 
   scene.addEventListener('pointercancel',e=>{
     if(pointer && pointer.id===e.pointerId)pointer=null;
   },{passive:true});
+  // ===== LẮC MẠNH ĐIỆN THOẠI ĐỂ XOAY (DeviceMotion) =====
+  // Android: tự lắng nghe khi được trình duyệt cho phép.
+  // iPhone/iPad: nhấn "Lắc xoay" một lần để xin quyền cảm biến.
+  const shakeButton=document.getElementById('shakeButton');
+  const shakeLabel=document.getElementById('shakeLabel');
+  let shakeEnabled=false, motionSeen=false, motionTimer=0;
+  let motionBase=null, peakAt=-Infinity, peakCount=0, peakArmed=true;
+  let lastShake=-Infinity;
+
+  function shakeMessage(message) {
+    const toast=document.getElementById('toast');
+    if (!toast) return;
+    toast.textContent=message;
+    toast.classList.add('show');
+    clearTimeout(shakeMessage.timer);
+    shakeMessage.timer=setTimeout(()=>toast.classList.remove('show'),2400);
+  }
+  function markShake(on){
+    shakeButton.setAttribute('aria-pressed',String(on));
+    shakeLabel.textContent=on?'Đang lắng nghe':'Lắc xoay';
+  }
+  function disableShake(){
+    shakeEnabled=false;
+    window.removeEventListener('devicemotion', onDeviceMotion);
+    clearTimeout(motionTimer);
+    motionBase=null;peakCount=0;peakArmed=true;motionSeen=false;
+    markShake(false);
+  }
+  function onDeviceMotion(e){
+    if(!shakeEnabled || isPaused())return;
+    const a=e.acceleration;
+    const ag=e.accelerationIncludingGravity;
+    const direct=!!(a && [a.x,a.y,a.z].some(v=>typeof v==='number' && Number.isFinite(v)));
+    const source=direct?a:ag;
+    if(!source || ![source.x,source.y,source.z].some(v=>typeof v==='number' && Number.isFinite(v)))return;
+    motionSeen=true;
+    // Nếu trình duyệt chỉ đưa gia tốc gồm trọng lực, dùng high-pass để bỏ độ nghiêng.
+    const x=Number(source.x)||0,y=Number(source.y)||0,z=Number(source.z)||0;
+    let hx=x,hy=y,hz=z;
+    if(!direct){
+      if(!motionBase){motionBase={x,y,z};return;}
+      motionBase.x=motionBase.x*.88+x*.12;
+      motionBase.y=motionBase.y*.88+y*.12;
+      motionBase.z=motionBase.z*.88+z*.12;
+      hx=x-motionBase.x;hy=y-motionBase.y;hz=z-motionBase.z;
+    }
+    const strength=Math.hypot(hx,hy,hz);
+    const threshold=direct?10.5:9.2; // m/s², cần LẮC mạnh chứ không chỉ nghiêng.
+    const now=performance.now();
+    if(strength<threshold*.54)peakArmed=true;
+    if(now-peakAt>760)peakCount=0;
+    if(strength>=threshold && peakArmed && now-peakAt>82){
+      peakArmed=false;
+      peakCount++;
+      peakAt=now;
+      if(peakCount>=2 && now-lastShake>4500){
+        peakCount=0;
+        lastShake=now;
+        // Không cộng thêm vòng khi tim đã quay, không kích hoạt vì chạm liên tục.
+        if(!spin){
+          const speed=clamp(strength*110,850,2100);
+          spinNow(speed,hx < 0 ? -1 : 1);
+          shakeMessage('💗 Đã nhận lắc mạnh! Trái tim đang xoay.');
+        }
+      }
+    }
+  }
+  function startShake(){
+    shakeEnabled=true;motionSeen=false;
+    peakCount=0;peakAt=-Infinity;peakArmed=true;motionBase=null;
+    window.addEventListener('devicemotion',onDeviceMotion,{passive:true});
+    markShake(true);
+    clearTimeout(motionTimer);
+    motionTimer=setTimeout(()=>{
+      if(shakeEnabled && !motionSeen){
+        disableShake();
+        shakeMessage('Không nhận được cảm biến lắc. Hãy mở website bằng HTTPS trên Chrome/Safari.');
+      }
+    },4700);
+  }
+  shakeButton.addEventListener('click',async()=>{
+    if(shakeEnabled){disableShake();shakeMessage('Đã tắt xoay bằng cách lắc.');return;}
+    if(!('DeviceMotionEvent' in window)){
+      shakeMessage('Thiết bị không hỗ trợ cảm biến lắc. Vẫn có thể vuốt để xoay.');return;
+    }
+    if(!isSecureContext){
+      shakeMessage('Cảm biến lắc cần website HTTPS. Vẫn có thể vuốt để xoay.');return;
+    }
+    try{
+      // Kích hoạt âm thanh trong chính thao tác bấm nút, trước khi await quyền cảm biến.
+      unlockSound();
+      // iOS yêu cầu lời gọi này xuất phát trực tiếp từ nút bấm của người dùng.
+      if(typeof DeviceMotionEvent.requestPermission==='function'){
+        const permission=await DeviceMotionEvent.requestPermission();
+        if(permission!=='granted'){
+          shakeMessage('Chưa được cấp quyền chuyển động. Hãy cho phép cảm biến để lắc xoay.');return;
+        }
+      }
+      unlockSound();
+      startShake();
+      shakeMessage('Đã bật cảm biến! Lắc điện thoại mạnh 2 nhịp để xoay.');
+    }catch(_){
+      disableShake();
+      shakeMessage('Không cấp được quyền cảm biến. Hãy thử Safari/Chrome trên HTTPS.');
+    }
+  });
+  // Tự bật trên Android nếu thiết bị cho phép mà không cần bấm cấp quyền.
+  if(isMobile() && 'DeviceMotionEvent' in window &&
+     typeof DeviceMotionEvent.requestPermission!=='function' && isSecureContext){
+    startShake();
+  }
+
   // Người dùng bàn phím trên PC cũng có thể xoay, không ảnh hưởng Enter/Space gốc.
   scene.addEventListener('keydown', e => {
     if (e.key==='ArrowRight' || e.key==='ArrowLeft') {
