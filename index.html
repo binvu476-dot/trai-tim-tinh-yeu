@@ -296,22 +296,25 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
  let pointer=null;
  scene.addEventListener('pointerdown',e=>{
    if(e.button!==undefined&&e.button!==0)return;
-   pointer={x:e.clientX,y:e.clientY,moved:false};
+    if(e.isPrimary===false || pointer)return; // Chỉ xử lý một ngón/một chuột tại một thời điểm.
+    pointer={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
    if(scene.setPointerCapture)try{scene.setPointerCapture(e.pointerId)}catch(_e){}
  },{passive:true});
  scene.addEventListener('pointermove',e=>{
-   if(state.sensorOn && state.sensorSeen)return;
-   if(e.pointerType!=='mouse'&&!pointer)return;
-   if(pointer&&Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)>11)pointer.moved=true;
+    if(state.sensorOn && state.sensorSeen)return;
+    // Chỉ nghiêng theo thao tác kéo thật; di chuyển chuột hoặc bấm nhiều lần không làm tim tự xoay.
+    if(!pointer || pointer.id!==e.pointerId)return;
+    if(Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)>11)pointer.moved=true;
    const r=rect||scene.getBoundingClientRect();
    // Rê chuột trên PC hoặc kéo ngón tay trên điện thoại để xoay theo 2 trục.
    state.ty=clamp(((e.clientX-r.left)/r.width-.5)*43,-23,23);
    state.tx=clamp(-((e.clientY-r.top)/r.height-.5)*36,-19,19);
  },{passive:true});
  scene.addEventListener('pointerup',e=>{
-   if(pointer&&!pointer.moved)burst(e.clientX,e.clientY);
+    if(!pointer || pointer.id!==e.pointerId)return;
+    if(!pointer.moved && Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)<=11)burst(e.clientX,e.clientY);
    pointer=null;
-   if(!(state.sensorOn&&state.sensorSeen)&&e.pointerType!=='mouse'){state.tx=0;state.ty=0}
+   if(!(state.sensorOn&&state.sensorSeen)){state.tx=0;state.ty=0}
  },{passive:true});
  scene.addEventListener('pointercancel',()=>{pointer=null;if(!state.sensorSeen){state.tx=0;state.ty=0}},{passive:true});
  scene.addEventListener('pointerleave',()=>{if(!pointer&&!state.sensorSeen){state.tx=0;state.ty=0}},{passive:true});
@@ -441,8 +444,8 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
 })();
 </script>
 
-<!-- BỔ SUNG: Quẹt mạnh quay quán tính, cạch khi dừng, cánh hoa từ tâm.
-     Phần mã Galaxy Love phía trên được giữ nguyên. -->
+<!-- BỔ SUNG: Quẹt ngang để quay quanh trục dọc (Y), gia tốc rồi chậm dần, cạch và cánh hoa.
+     Nhạc SECRET.mp3 gốc và các chức năng Galaxy Love vẫn giữ nguyên. -->
 <style>
   .spin-shell {
     position:absolute;
@@ -452,6 +455,17 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     transform-origin:50% 50%;
   }
   .spin-shell.spinning { will-change:transform; }
+  .scene { -webkit-touch-callout:none; }
+  .spin-shell { backface-visibility:visible; }
+  .spin-face {
+    position:absolute;
+    inset:0;
+    transform-style:preserve-3d;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+    pointer-events:none;
+  }
+  .spin-face.back { transform:rotateY(180deg); }
   .petal-fx {
     position:absolute;
     inset:0;
@@ -468,7 +482,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
 <script>
 (() => {
   'use strict';
-  // Mã bổ sung hoạt động độc lập, không sửa hàm/tính năng gốc.
+  // Lớp quay quanh trục Y độc lập, giữ nguyên nội dung và nhạc nền gốc.
   const scene = document.getElementById('scene');
   const tilt = document.getElementById('tilt');
   const universe = document.querySelector('.universe');
@@ -478,8 +492,46 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
   const shell = document.createElement('div');
   shell.className = 'spin-shell';
   shell.id = 'spinShell';
+
+  const frontFace = document.createElement('div');
+  frontFace.className = 'spin-face front';
+  const backFace = document.createElement('div');
+  backFace.className = 'spin-face back';
+
+  // Tạo mặt sau giống mặt trước, nhưng là một mặt riêng để khi lật 180° vẫn nhìn đúng chiều.
+  const backTilt = tilt.cloneNode(true);
+  backTilt.id = 'tiltBack';
+  backTilt.querySelectorAll('[id]').forEach(node => {
+    if (node === backTilt) return;
+    node.id = node.id + '-back';
+  });
+  backTilt.querySelectorAll('[href]').forEach(node => {
+    const href = node.getAttribute('href');
+    if (href && href.startsWith('#')) node.setAttribute('href', href + '-back');
+  });
+  backTilt.querySelectorAll('[xlink\:href]').forEach(node => {
+    const href = node.getAttribute('xlink:href');
+    if (href && href.startsWith('#')) node.setAttribute('xlink:href', href + '-back');
+  });
+
   tilt.before(shell);
-  shell.appendChild(tilt);
+  shell.appendChild(frontFace);
+  frontFace.appendChild(tilt);
+  shell.appendChild(backFace);
+  backFace.appendChild(backTilt);
+
+  // Ẩn gợi ý/nội dung trợ năng trùng ở mặt sau để tránh lặp nội dung cho screen reader.
+  backTilt.querySelectorAll('.hint,[aria-live],[role="status"],h1,p').forEach(node => {
+    if (node.classList.contains('hint')) node.style.display = 'none';
+  });
+  backTilt.setAttribute('aria-hidden', 'true');
+
+  // Đồng bộ góc nghiêng mặt sau với mặt trước để 2 mặt luôn giống nhau trong mọi trạng thái.
+  const syncBackTilt = () => {
+    backTilt.style.transform = tilt.style.transform || '';
+  };
+  syncBackTilt();
+  new MutationObserver(syncBackTilt).observe(tilt, { attributes:true, attributeFilter:['style'] });
 
   const canvas = document.createElement('canvas');
   canvas.className = 'petal-fx';
@@ -491,8 +543,8 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
   if (!ctx) return;
 
   const hint = scene.querySelector('.hint');
-  if (hint) hint.textContent = '✦ Chạm: lời yêu thương · Kéo: 3D · Quẹt mạnh: xoay và bung cánh hoa ✦';
-  scene.setAttribute('aria-label', 'Trái tim Vũ và Quyên; chạm để nhận lời yêu thương, kéo để nghiêng 3D, quẹt nhanh để xoay nhiều vòng và tung cánh hoa');
+  if (hint) hint.textContent = '✦ Chạm: lời thương · Kéo: nghiêng 3D · Vuốt ngang mạnh: xoay trục dọc ✦';
+  scene.setAttribute('aria-label', 'Trái tim Vũ và Quyên; chạm để nhận lời yêu thương, kéo để nghiêng 3D, vuốt ngang nhanh để xoay quanh trục dọc rồi bung cánh hoa');
 
   const coarse = matchMedia('(pointer:coarse)').matches;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -622,28 +674,54 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     ctx.globalAlpha=1;
   }
 
+  // Bảng quán tính thời gian: tăng vận tốc thật trong 23% thời gian đầu,
+  // sau đó ma sát làm chậm trơn tru đến 0. Tích phân để dừng đúng 360° × số vòng.
+  const SAMPLES = 360;
+  const travel = new Float64Array(SAMPLES+1);
+  function velocityShape(u) {
+    const accelerate = .23;
+    if (u < accelerate) {
+      const a = u / accelerate;
+      return .045 + .955 * (a*a*(3-2*a)); // Tăng tốc rõ, không giật.
+    }
+    const d = (u-accelerate)/(1-accelerate);
+    return Math.exp(-3.15*d*d)*Math.pow(Math.max(0,1-d*d),1.32); // Hãm bởi quán tính.
+  }
+  let area=0, previous=velocityShape(0);
+  for(let i=1;i<=SAMPLES;i++) {
+    const next=velocityShape(i/SAMPLES);
+    area+=(previous+next)/(2*SAMPLES);
+    travel[i]=area;
+    previous=next;
+  }
+  for(let i=1;i<=SAMPLES;i++) travel[i]/=area;
+  function travelAt(u) {
+    const t=clamp(u,0,1)*SAMPLES;
+    const a=Math.floor(t),b=Math.min(a+1,SAMPLES);
+    return travel[a]+(travel[b]-travel[a])*(t-a);
+  }
+
   function spinNow(velocity, direction) {
-    if (isPaused()) return;
+    // Đang quay thì mọi click, vuốt khác không thể cộng thêm vòng quay.
+    if (isPaused() || spin) return;
     unlockSound();
     const turns = clamp(Math.round(velocity/480)+1, 2, 6);
-    // Khóa đích ở đúng một số vòng tròn để logo, chữ quay về tư thế ban đầu.
-    const aligned = Math.round(angle/360)*360;
-    const target = aligned + direction*turns*360;
-    spin = {
-      from:angle,
-      to:target,
+    angle=0;
+    spin={
+      direction:direction < 0 ? -1 : 1,
+      turns,
       elapsed:0,
-      duration:1.68 + turns*.48
+      duration:2.25+turns*.38
     };
     shell.classList.add('spinning');
     schedule();
   }
 
   function finishSpin() {
-    spin = null;
-    // Góc 0° tương đương tất cả bội của 360°, tránh tích lũy góc rất lớn.
-    angle = 0;
-    shell.style.transform = 'rotateZ(0deg)';
+    spin=null;
+    // Chuyển đúng về chính diện khi đã hoàn tất vòng nguyên, không nhảy góc.
+    angle=0;
+    shell.style.transform='rotateY(0deg)';
     shell.classList.remove('spinning');
     clickSound();
     flowerBloom();
@@ -651,13 +729,13 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
 
   function updateSpin(dt) {
     if (!spin) return;
-    spin.elapsed = Math.min(spin.duration, spin.elapsed+dt);
-    const u = spin.elapsed/spin.duration;
-    // Ease-out bậc 4: đầu quay rất nhanh, cuối chậm dần rồi dừng mềm.
-    const eased = 1-Math.pow(1-u,4);
-    angle = spin.from+(spin.to-spin.from)*eased;
-    shell.style.transform = `rotateZ(${angle.toFixed(2)}deg)`;
-    if (u >= 1) finishSpin();
+    spin.elapsed=Math.min(spin.duration,spin.elapsed+dt);
+    const u=spin.elapsed/spin.duration;
+    const distance=travelAt(u);
+    angle=spin.direction*spin.turns*360*distance;
+    // Trục dọc (Y), trái tim lật nghiêng có chiều sâu, không quay phẳng như đồng hồ.
+    shell.style.transform=`rotateY(${angle.toFixed(3)}deg)`;
+    if(u>=1)finishSpin();
   }
 
   function frame(now) {
@@ -682,43 +760,54 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     raf=0;lastTime=0;lastPaint=0;
   }
 
+  // Mỗi lần bấm/vuốt có mã pointer riêng; không gộp nhiều click thành một cú quẹt.
   function record(e) {
-    if (!pointer || pointer.id !== e.pointerId) return;
-    const now = performance.now();
+    if (!pointer || pointer.id!==e.pointerId) return;
+    const now=performance.now();
+    const last=pointer.points[pointer.points.length-1];
+    if(Math.hypot(e.clientX-last.x,e.clientY-last.y)>.5) pointer.travelEvents++;
     pointer.points.push({x:e.clientX,y:e.clientY,t:now});
-    while (pointer.points.length>2 && pointer.points[1].t < now-150) pointer.points.shift();
-    if (pointer.points.length>12) pointer.points.shift();
+    while (pointer.points.length>2 && pointer.points[1].t<now-150) pointer.points.shift();
+    if (pointer.points.length>14) pointer.points.shift();
   }
 
-  scene.addEventListener('pointerdown', e => {
-    if (e.button!==undefined && e.button!==0) return;
-    pointer = {
-      id:e.pointerId, startX:e.clientX, startY:e.clientY,
+  scene.addEventListener('pointerdown',e=>{
+    if(e.isPrimary===false || (e.button!==undefined && e.button!==0) || pointer)return;
+    pointer={
+      id:e.pointerId, startX:e.clientX,startY:e.clientY,
+      startAt:performance.now(),travelEvents:0,
       points:[{x:e.clientX,y:e.clientY,t:performance.now()}]
     };
     unlockSound();
-  }, {passive:true});
+  },{passive:true});
 
-  scene.addEventListener('pointermove', record, {passive:true});
+  scene.addEventListener('pointermove',e=>{
+    if(pointer && pointer.id===e.pointerId)record(e);
+  },{passive:true});
 
-  scene.addEventListener('pointerup', e => {
-    if (!pointer || pointer.id!==e.pointerId) return;
+  scene.addEventListener('pointerup',e=>{
+    if(!pointer || pointer.id!==e.pointerId)return;
     record(e);
     const p=pointer;
     pointer=null;
-    const allDistance = Math.hypot(e.clientX-p.startX,e.clientY-p.startY);
-    const first=p.points[0], last=p.points[p.points.length-1];
-    const secs=Math.max(.016,(last.t-first.t)/1000);
-    const vx=(last.x-first.x)/secs, vy=(last.y-first.y)/secs;
-    const speed=Math.hypot(vx,vy);
-    // Quẹt đủ nhanh và đủ xa; chạm nhẹ/kéo chậm vẫn giữ đúng tác dụng gốc.
-    if (allDistance>=48 && speed>=560 && Math.hypot(last.x-first.x,last.y-first.y)>=25) {
-      const direction = Math.abs(vx)>=Math.abs(vy) ? Math.sign(vx) : -Math.sign(vy);
-      spinNow(speed,direction || 1);
-    }
-  }, {passive:true});
+    if(spin || isPaused())return;
+    const dx=e.clientX-p.startX,dy=e.clientY-p.startY;
+    const distance=Math.hypot(dx,dy);
+    const totalTime=performance.now()-p.startAt;
+    // Chỉ vuốt NGANG đủ xa, có sự kiện di chuyển thực và tốc độ cao mới xoay.
+    // Click, double click, nhấn liên tục, kéo chậm và vuốt dọc đều không được tính.
+    if(p.travelEvents<1 || totalTime<24 || Math.abs(dx)<60 ||
+       distance<70 || Math.abs(dx)<Math.abs(dy)*1.3)return;
+    const first=p.points[0],last=p.points[p.points.length-1];
+    const seconds=Math.max(.016,(last.t-first.t)/1000);
+    const speed=Math.hypot(last.x-first.x,last.y-first.y)/seconds;
+    if(speed<560)return;
+    spinNow(speed,Math.sign(dx));
+  },{passive:true});
 
-  scene.addEventListener('pointercancel', () => {pointer=null;}, {passive:true});
+  scene.addEventListener('pointercancel',e=>{
+    if(pointer && pointer.id===e.pointerId)pointer=null;
+  },{passive:true});
   // Người dùng bàn phím trên PC cũng có thể xoay, không ảnh hưởng Enter/Space gốc.
   scene.addEventListener('keydown', e => {
     if (e.key==='ArrowRight' || e.key==='ArrowLeft') {
