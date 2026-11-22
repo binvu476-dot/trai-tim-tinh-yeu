@@ -1,565 +1,438 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#080417">
-  <meta name="description" content="Vũ & Quyên — một thiên hà nhỏ dành riêng cho tình yêu của chúng mình.">
-  <title>Vũ ❤️ Quyên | Galaxy Love V5.0</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --white: #fff1fc;
-      --pink: #ff78c9;
-      --pink2: #ff38a7;
-      --violet: #a67aff;
-      --cyan: #99f5ff;
-      --glass: rgba(28, 14, 54, .47);
-      --line: rgba(255, 199, 243, .20);
-      --rx: 0deg;
-      --ry: 0deg;
-    }
-    *, *::before, *::after { box-sizing: border-box; }
-    html { height: 100%; }
-    body {
-      width: 100%; min-height: 100%; margin: 0;
-      overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-      color: var(--white);
-      background: #060310;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: pan-y;
-    }
-    button { font: inherit; }
-    button:focus-visible { outline: 2px solid #ffd1f2; outline-offset: 4px; }
-    .universe { position: fixed; inset: 0; isolation: isolate; overflow: hidden; }
-    .nebula {
-      position: absolute; inset: -18%; pointer-events: none; opacity: .95;
-      background:
-        radial-gradient(ellipse 35% 29% at 29% 44%, rgba(92, 33, 173, .37), transparent 75%),
-        radial-gradient(ellipse 34% 32% at 69% 48%, rgba(243, 32, 133, .28), transparent 75%),
-        radial-gradient(ellipse 23% 29% at 51% 65%, rgba(44, 66, 183, .27), transparent 77%),
-        radial-gradient(ellipse 58% 47% at 50% 46%, rgba(28, 9, 67, .85), transparent 79%),
-        linear-gradient(145deg, #060312, #120722 51%, #05040f);
-      animation: nebulaDrift 26s ease-in-out infinite alternate;
-    }
-    .nebula::after {
-      content: ""; position: absolute; inset: 8%; opacity: .34;
-      background: conic-gradient(from 17deg at 50% 51%, transparent 0deg, rgba(230, 64, 191, .19) 52deg, transparent 95deg, rgba(117, 103, 255, .20) 185deg, transparent 245deg, rgba(63, 214, 243, .13) 320deg, transparent);
-      filter: blur(45px); animation: galaxySpin 75s linear infinite;
-    }
-    .noise { position: absolute; inset: 0; opacity: .12; pointer-events: none;
-      background-image: radial-gradient(#fff 0.45px, transparent 0.55px);
-      background-size: 31px 37px; }
-    canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-    #sky { z-index: 1; }
-    #fx { z-index: 6; }
-
-    .top { position: absolute; inset: max(22px, env(safe-area-inset-top)) 0 auto; z-index: 8;
-      display: flex; flex-direction: column; align-items: center; gap: 9px; text-align: center; padding: 0 16px; pointer-events: none; }
-    .eyebrow { display: inline-flex; align-items: center; gap: 9px; letter-spacing: .26em; text-transform: uppercase;
-      font-size: 10px; font-weight: 750; color: #f9d6fb; text-shadow: 0 0 20px #fb58e1a0; }
-    .eyebrow::before,.eyebrow::after { content:""; width: 22px; height: 1px; background: linear-gradient(90deg, transparent, #eab2f8); }
-    .eyebrow::after { transform: rotate(180deg); }
-    .subtitle { font: italic 13px Georgia, serif; letter-spacing: .055em; color: #c7b6e5; opacity: .9; }
-
-    .stage-wrap { position: absolute; z-index: 3; inset: 0; display: grid; place-items: center; pointer-events: none; }
-    .scene { position: relative; width: min(93vw, 720px, 78svh); aspect-ratio: 1; pointer-events: auto;
-      perspective: 1050px; cursor: crosshair; touch-action: none; outline: none; }
-    .scene:focus-visible { outline: 1px solid #ffe4fa; border-radius: 50%; }
-    .aura { position: absolute; inset: 21%; z-index: -1; border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 113, 206, .23) 0%, rgba(199, 52, 216, .19) 33%, rgba(84, 21, 163, .08) 62%, transparent 76%);
-      filter: blur(18px); animation: aura 5.5s ease-in-out infinite alternate; }
-    .orbit { position: absolute; inset: 11%; z-index: -1; border-radius: 50%;
-      border: 1px solid rgba(218, 125, 255, .09); transform: rotate(-29deg) scaleY(.68);
-      box-shadow: 0 0 34px #dc41ff11; }
-    .orbit.two { inset: 5%; transform: rotate(34deg) scaleY(.75); border-color: rgba(126, 230, 255, .07); }
-    .tilt { position: absolute; inset: 0; transform-style: preserve-3d;
-      transform: rotateX(var(--rx)) rotateY(var(--ry)); will-change: transform; }
-    .beat { position: absolute; inset: 0; transform-origin: 50% 50%;
-      animation: pulse 2.45s cubic-bezier(.4,.0,.55,1) infinite; }
-    .heart-svg { width: 100%; height: 100%; overflow: visible;
-      filter: drop-shadow(0 0 9px #ff55bc85); }
-    .layer { transform-box: view-box; transform-origin: center;
-      animation: ringSway var(--sway,8s) ease-in-out infinite alternate; }
-    .ring-outline { stroke-width: 1.05; fill: none; opacity: .28; }
-    .ring-text { font: 700 var(--font,16px) Arial, sans-serif; letter-spacing: .2px;
-      paint-order: stroke; stroke-width: .43px; text-shadow: 0 0 4px currentColor, 0 0 10px currentColor; }
-    .ring-0 .ring-text { fill: #fff0fb; stroke: #ff6bd6; color: #ff77cc; }
-    .ring-1 .ring-text { fill: #ffd1f1; stroke: #fc52cb; color: #fc46c2; }
-    .ring-2 .ring-text { fill: #e5d7ff; stroke: #b281ff; color: #9e6dff; }
-    .ring-3 .ring-text { fill: #ffc2ed; stroke: #ff63b4; color: #f84ea9; }
-    .ring-4 .ring-text { fill: #e7faff; stroke: #8cdcf8; color: #74d9ff; }
-    .ring-0 .ring-outline { stroke: #fa65ca; }.ring-1 .ring-outline { stroke: #ff57b0; }
-    .ring-2 .ring-outline { stroke: #b98dff; }.ring-3 .ring-outline { stroke: #ff80c7; }
-    .ring-4 .ring-outline { stroke: #91ebff; }
-
-    .center { position: absolute; z-index: 4; left: 50%; top: 49%; width: 54%;
-      transform: translate(-50%, -50%); text-align: center; pointer-events: none;
-      animation: drift 4.3s ease-in-out infinite; }
-    .center::before { content: ""; position: absolute; z-index: -1; inset: 4% -5%; border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(14, 5, 32, .96) 0%, rgba(14, 5, 32, .90) 45%, rgba(14, 5, 32, .66) 65%, transparent 87%);
-      filter: blur(10px); }
-    .forever { color: #fff0fb; font-size: clamp(9px, 1.7vw, 13px); font-weight: 760;
-      letter-spacing: .28em; text-transform: uppercase; text-shadow: 0 0 10px #e8a5ff; }
-    .names { margin: 10px 0 8px; font: italic 700 clamp(28px, 5.7vw, 51px)/1.12 Georgia, "Times New Roman", serif;
-      white-space: nowrap; letter-spacing: -.045em; color: #fff2fb;
-      text-shadow: 0 0 7px #fff, 0 0 16px #ff9ce1, 0 0 35px #fa42b5;
-      animation: nameGlow 3.5s ease-in-out infinite alternate; }
-    .names .amp { font-size: .75em; color: #ffa9dd; }
-    .love-line { width: 74%; height: 1px; margin: 12px auto 13px; opacity: .82;
-      background: linear-gradient(90deg,transparent,#f4a3db 50%,transparent); box-shadow: 0 0 11px #ff80dc; }
-    .message { margin: 0; font-size: clamp(12px, 2.6vw, 18px); line-height: 1.5; font-weight: 660;
-      color: #ffd0ef; text-shadow: 0 0 11px #f74db8; }
-    .message .last { white-space: nowrap; }
-    .main-heart { margin-top: 5px; color: #ff8dd5; font-size: clamp(22px, 4.5vw, 36px);
-      line-height: 1.15; filter: drop-shadow(0 0 12px #ff44b6); animation: tinyPulse 1.5s infinite; }
-    .wish-hint { position: absolute; left: 50%; bottom: 5%; transform: translateX(-50%);
-      width: max-content; max-width: 95%; font-size: 11px; letter-spacing: .08em; color: #d2b5e5;
-      text-align: center; opacity: .76; pointer-events: none; text-shadow: 0 0 8px #6f3394; }
-
-    .dock { position: absolute; z-index: 10; bottom: max(17px, env(safe-area-inset-bottom)); left: 50%;
-      transform: translateX(-50%); width: min(94vw, 500px); display: flex; flex-direction: column; align-items: center; gap: 9px; }
-    .controls { width: 100%; display: flex; justify-content: center; gap: 8px; padding: 9px;
-      border-radius: 24px; background: var(--glass); border: 1px solid var(--line);
-      box-shadow: 0 13px 60px #0007, inset 0 1px #ffffff13;
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-    .control { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; align-items: center; gap: 7px;
-      padding: 11px 9px; border-radius: 15px; border: 1px solid transparent; cursor: pointer;
-      color: #e8d6f2; background: transparent; font-size: 12px; font-weight: 650; transition: background .2s, border-color .2s, transform .2s; }
-    .control:hover, .control[aria-pressed="true"] { background: #fa6dc121; border-color: #ffa7ed40; color: #fff0fa; }
-    .control:active { transform: scale(.96); }
-    .control .ico { font-size: 16px; line-height: 1; }
-    .status { text-align: center; font-size: 10px; color: #bdaed6; letter-spacing: .06em; opacity: .87; }
-    .toast { position: absolute; z-index: 30; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(15px);
-      padding: 12px 16px; border-radius: 14px; color: #ffecfb; background: rgba(41,16,68,.92);
-      border: 1px solid #ec9ce566; max-width: min(90vw, 410px); min-width: 210px;
-      font-size: 12px; text-align: center; pointer-events: none; box-shadow: 0 14px 35px #0008;
-      opacity: 0; transition: opacity .25s, transform .25s; }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    @keyframes nebulaDrift { from { transform: translate(-1%,1%) scale(1); } to { transform: translate(2%,-2%) scale(1.05); } }
-    @keyframes galaxySpin { to { transform: rotate(360deg); } }
-    @keyframes aura { from { opacity: .56; transform: scale(.87); } to { opacity: 1; transform: scale(1.21); } }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 33% { transform: scale(1.037); } 52% { transform: scale(1.002); } 69% { transform: scale(1.026); } }
-    @keyframes tinyPulse { 0%,100% { transform: scale(1); } 45% { transform: scale(1.17); } }
-    @keyframes drift { 0%,100% { translate: 0 0; } 50% { translate: 0 -8px; } }
-    @keyframes ringSway { from { transform: rotate(-.8deg) scale(.994); } to { transform: rotate(.8deg) scale(1.006); } }
-    @keyframes nameGlow { from { filter: brightness(.94); } to { filter: brightness(1.19); } }
-    body.paused *, body.paused *::before, body.paused *::after { animation-play-state: paused !important; }
-
-    @media (max-width: 600px) {
-      .top { top: max(24px, env(safe-area-inset-top)); gap: 7px; }
-      .eyebrow { font-size: 9px; letter-spacing: .19em; }.subtitle { font-size: 12px; }
-      .scene { width: min(104vw, 520px, 68svh); }
-      .center { width: 53%; top: 48.5%; }
-      .forever { font-size: clamp(8px, 2vw, 11px); letter-spacing: .19em; }
-      .names { font-size: clamp(23px, 6.7vw, 34px); margin: 6px 0 4px; }
-      .love-line { margin: 7px auto 8px; }
-      .message { font-size: clamp(10px, 2.7vw, 13px); }
-      .main-heart { font-size: 27px; margin-top: 2px; }
-      .wish-hint { bottom: 3%; font-size: 9px; }
-      .controls { gap: 4px; padding: 7px; border-radius: 20px; }
-      .control { padding: 11px 4px; font-size: 11px; gap: 5px; border-radius: 14px; }
-      .control .ico { font-size: 15px; }
-      .status { font-size: 9px; }
-    }
-    @media (max-height: 620px) {
-      .top { top: 9px; gap: 3px; }
-      .scene { width: min(86vw, 75svh); }
-      .dock { bottom: 7px; gap: 3px; }
-      .controls { padding: 5px; }.control { padding: 7px 5px; }
-      .wish-hint { display: none; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .nebula, .nebula::after, .aura, .beat, .layer, .center, .names, .main-heart { animation: none !important; }
-      .tilt { transition: transform .2s; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a051a">
+<meta name="description" content="Galaxy Love Vũ và Quyên – trái tim 3D xoay theo cảm biến và lời yêu thương bùng nổ.">
+<title>Vũ ♥ Quyên – Galaxy Love 3D</title>
+<style>
+:root {color-scheme:dark; --pink:#ff8ed5; --violet:#b58aff; --white:#fff0fb;}
+*,*::before,*::after {box-sizing:border-box}
+html,body {height:100%;width:100%;margin:0;overflow:hidden}
+body {background:#080416;color:var(--white);font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+button {font:inherit;cursor:pointer}
+button:focus-visible,.scene:focus-visible {outline:2px solid #ffd2f3;outline-offset:4px}
+.universe {position:fixed;inset:0;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse 56% 54% at 49% 49%,#2a124b 0%,#170a30 58%,transparent 99%),radial-gradient(ellipse 37% 45% at 22% 39%,#2e114b,transparent),radial-gradient(ellipse 42% 37% at 78% 57%,#361147,transparent),#080416}
+canvas {position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+#sky {z-index:1} #fx {z-index:8}
+.header {position:absolute;top:max(20px,env(safe-area-inset-top));left:0;right:0;z-index:10;text-align:center;pointer-events:none;padding:0 12px}
+.kicker {font-size:10px;font-weight:750;letter-spacing:.28em;text-transform:uppercase;color:#f4c5eb}
+.subtitle {margin-top:9px;font:italic 13px Georgia,serif;color:#cdbbe9}
+.stage-wrap {position:absolute;inset:0;display:grid;place-items:center;z-index:4;pointer-events:none}
+.scene {position:relative;width:min(94vw,700px,75svh);aspect-ratio:1;perspective:900px;perspective-origin:50% 50%;touch-action:none;cursor:grab;pointer-events:auto;outline:none;user-select:none;-webkit-user-select:none}
+.scene:active {cursor:grabbing}
+.halo {position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle,#ea3ba637 0%,#af55d924 46%,transparent 75%);animation:halo 6s ease-in-out infinite alternate;pointer-events:none}
+.orbit {position:absolute;inset:13%;border:1px solid #c96efa20;border-radius:50%;transform:rotate(-28deg) scaleY(.72);pointer-events:none}
+.orbit.two {inset:7%;border-color:#81d6ff1c;transform:rotate(34deg) scaleY(.72)}
+.tilt {position:absolute;inset:0;transform:rotateX(0deg) rotateY(0deg);transform-style:preserve-3d;will-change:transform;pointer-events:none}
+.beat {position:absolute;inset:0;transform-style:preserve-3d;animation:beat 2.6s ease-in-out infinite}
+.depth,.heart-svg {position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.depth svg {width:100%;height:100%;display:block}
+.depth.back {transform:translateZ(-45px) scale(1.035);opacity:.16}
+.depth.mid {transform:translateZ(-19px) scale(1.015);opacity:.27}
+.depth.front {transform:translateZ(3px);opacity:.19}
+.depth.back path {fill:#9b54ee;stroke:#bf86ff;stroke-width:5}
+.depth.mid path {fill:#e44bba;stroke:#ff8fdd;stroke-width:3}
+.depth.front path {fill:#f36cc8;stroke:#ffc2eb;stroke-width:2}
+.heart-svg {transform:translateZ(28px);filter:drop-shadow(0 0 5px #f342b361)}
+.ring .outline {fill:none;stroke-width:1.1;opacity:.35}
+.ring text {font:700 16px Arial,sans-serif;letter-spacing:.1px}
+.ring-0 text {fill:#ffe9fb}.ring-0 .outline {stroke:#ff7ed0}
+.ring-1 text {fill:#ff93d9}.ring-1 .outline {stroke:#f54dae}
+.ring-2 text {fill:#dfc8ff}.ring-2 .outline {stroke:#a981ff}
+.ring-3 text {fill:#ffc0ec}.ring-3 .outline {stroke:#ff6ab6}
+.ring-4 text {fill:#a6e9ff}.ring-4 .outline {stroke:#7adcfb}
+.center {position:absolute;left:50%;top:49%;z-index:5;width:54%;text-align:center;transform:translate3d(-50%,-50%,60px);pointer-events:none;backface-visibility:hidden}
+.center::before {content:"";position:absolute;inset:-8% -7%;z-index:-1;border-radius:50%;background:radial-gradient(ellipse,#140922f7 0%,#140922ec 49%,#170d2cca 69%,transparent 90%)}
+.forever {font-size:clamp(9px,1.5vw,13px);font-weight:750;letter-spacing:.23em;color:#fff0fa}
+.names {margin:9px 0 6px;white-space:nowrap;letter-spacing:-.045em;font:italic 700 clamp(25px,5.5vw,50px)/1.15 Georgia,serif;text-shadow:0 0 9px #f968c5,0 0 20px #ee49b777}
+.names span {font-size:.73em;color:#ff9dda}
+.line {height:1px;width:75%;margin:10px auto;background:linear-gradient(90deg,transparent,#ffafeb,transparent)}
+.message {margin:0;color:#ffd3f0;font-size:clamp(11px,2.5vw,18px);line-height:1.5;font-weight:700}
+.message span {white-space:nowrap}
+.center-heart {margin-top:3px;color:#ff8dd7;font-size:clamp(23px,4vw,35px);animation:tinybeat 1.6s ease-in-out infinite}
+.hint {position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:max-content;max-width:96%;pointer-events:none;text-align:center;color:#d2b8e8;font-size:11px}
+.words {position:absolute;z-index:9;inset:0;overflow:hidden;pointer-events:none}
+.float-word {position:absolute;max-width:min(48vw,210px);white-space:nowrap;padding:6px 10px;border-radius:99px;color:#fff4fd;font:700 clamp(10px,2.5vw,13px) system-ui,sans-serif;background:#421a62c9;border:1px solid #ffa7e386;box-shadow:0 2px 10px #07031377;left:var(--x);top:var(--y);will-change:transform,opacity;animation:flywords var(--dur,1.9s) ease-out forwards}
+.ripple {position:absolute;z-index:8;left:var(--x);top:var(--y);width:24px;height:24px;border:2px solid #ffadeb;border-radius:50%;pointer-events:none;animation:ripple .85s ease-out forwards}
+.love-card {position:absolute;z-index:11;left:50%;bottom:112px;max-width:min(92vw,450px);width:max-content;min-width:min(82vw,290px);padding:12px 18px;border:1px solid #ffb5eb8c;border-radius:18px;background:#27123ff2;box-shadow:0 12px 35px #0009;color:#fff1fb;text-align:center;pointer-events:none;opacity:0;transform:translate(-50%,18px) scale(.96);transition:opacity .22s,transform .22s}
+.love-card.show {opacity:1;transform:translate(-50%,0) scale(1)}
+.love-card small {display:block;color:#fba5dc;letter-spacing:.12em;font-size:10px;text-transform:uppercase;font-weight:800}
+.love-card strong {display:block;margin-top:5px;font-size:clamp(13px,3.2vw,18px);line-height:1.4}
+.dock {position:absolute;z-index:15;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(96vw,560px)}
+.controls {display:flex;gap:6px;background:#211035ed;border:1px solid #f2b6ed47;border-radius:19px;padding:7px}
+.control {flex:1;min-width:0;display:flex;gap:6px;align-items:center;justify-content:center;padding:11px 4px;border:1px solid transparent;border-radius:12px;background:transparent;color:#efddf6;font-size:12px;font-weight:650}
+.control:hover,.control[aria-pressed=true] {background:#f866bb1c;border-color:#ffa6e544}
+.control:active {transform:scale(.98)}
+.control .ico {font-size:16px;line-height:1}
+.status {padding-top:6px;min-height:17px;color:#c9b8e2;text-align:center;font-size:10px}
+.toast {position:absolute;left:50%;bottom:112px;z-index:30;max-width:90vw;min-width:230px;padding:11px 14px;border:1px solid #eda7e36a;border-radius:13px;background:#2d1647f0;color:#fff2fa;text-align:center;font-size:12px;pointer-events:none;opacity:0;transform:translate(-50%,12px);transition:opacity .18s,transform .18s}
+.toast.show {opacity:1;transform:translate(-50%,0)}
+@keyframes beat {0%,100%{transform:scale(1)}35%{transform:scale(1.03)}65%{transform:scale(1.012)}}
+@keyframes tinybeat {0%,100%{transform:scale(1)}45%{transform:scale(1.15)}}
+@keyframes halo {from{opacity:.52;transform:scale(.9)}to{opacity:1;transform:scale(1.12)}}
+@keyframes ripple {from{opacity:.9;transform:translate(-50%,-50%) scale(.2)}to{opacity:0;transform:translate(-50%,-50%) scale(12)}}
+@keyframes flywords {0%{opacity:0;transform:translate(-50%,-50%) scale(.48)}16%{opacity:1;transform:translate(calc(-50% + var(--hx)),calc(-50% + var(--hy))) scale(.94)}70%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.06)}}
+body.lite .heart-svg {filter:none} body.lite .halo {animation:none}
+body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float-word,body.paused .ripple {animation-play-state:paused}
+@media (max-width:600px) {
+ .scene{width:min(104vw,520px,66svh)} .subtitle{font-size:12px}
+ .forever{font-size:clamp(8px,2vw,10px);letter-spacing:.13em}.names{font-size:clamp(23px,6.4vw,35px);margin:6px 0}.line{margin:6px auto}
+ .message{font-size:clamp(10px,2.7vw,13px)}.center-heart{font-size:26px}.hint{font-size:9px;bottom:2%}
+ .controls{gap:3px;padding:6px;border-radius:16px}.control{font-size:10px;flex-direction:column;gap:3px;padding:8px 2px}.control .ico{font-size:16px}
+ .love-card{bottom:110px;padding:10px 13px}
+}
+@media (max-height:620px) {
+ .scene{width:min(84vw,73svh)}.header{top:6px}.subtitle{margin-top:3px}.hint{display:none}.dock{bottom:5px}.control{padding:6px 2px}
+ .love-card{bottom:81px;max-width:min(90vw,400px)}
+}
+@media (prefers-reduced-motion:reduce) {
+ body:not(.user-motion) .beat,body:not(.user-motion) .halo,body:not(.user-motion) .center-heart{animation:none!important}
+}
+</style>
 </head>
-<body>
-  <main class="universe" aria-label="Thiên hà tình yêu của Vũ và Quyên">
-    <div class="nebula" aria-hidden="true"></div>
-    <div class="noise" aria-hidden="true"></div>
-    <canvas id="sky" aria-hidden="true"></canvas>
-
-    <header class="top">
-      <div class="eyebrow">Galaxy Love <span aria-hidden="true">✧</span> V5.0</div>
-      <div class="subtitle">Trong cả thiên hà, anh chỉ chọn một người...</div>
-    </header>
-
-    <div class="stage-wrap">
-      <section class="scene" id="scene" role="button" tabindex="0" aria-label="Trái tim Vũ và Quyên. Chạm để tạo pháo hoa trái tim">
-        <div class="aura" aria-hidden="true"></div>
-        <div class="orbit" aria-hidden="true"></div>
-        <div class="orbit two" aria-hidden="true"></div>
-        <div class="tilt" id="tilt">
-          <div class="beat">
-            <svg id="heartSvg" class="heart-svg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <path id="path0"></path><path id="path1"></path><path id="path2"></path>
-                <path id="path3"></path><path id="path4"></path>
-              </defs>
-              <g class="layer ring-0" style="--font:17.5px;--sway:8.7s"><use href="#path0" class="ring-outline"></use><text class="ring-text"><textPath id="text0" href="#path0"></textPath></text></g>
-              <g class="layer ring-1" style="--font:16px;--sway:7.5s"><use href="#path1" class="ring-outline"></use><text class="ring-text"><textPath id="text1" href="#path1"></textPath></text></g>
-              <g class="layer ring-2" style="--font:14.8px;--sway:9.3s"><use href="#path2" class="ring-outline"></use><text class="ring-text"><textPath id="text2" href="#path2"></textPath></text></g>
-              <g class="layer ring-3" style="--font:13.2px;--sway:7.9s"><use href="#path3" class="ring-outline"></use><text class="ring-text"><textPath id="text3" href="#path3"></textPath></text></g>
-              <g class="layer ring-4" style="--font:11.8px;--sway:10s"><use href="#path4" class="ring-outline"></use><text class="ring-text"><textPath id="text4" href="#path4"></textPath></text></g>
-            </svg>
-          </div>
-        </div>
-        <div class="center">
-          <div class="forever">Forever & Always</div>
-          <h1 class="names">Vũ <span class="amp">♥</span> Quyên</h1>
-          <div class="love-line"></div>
-          <p class="message">Vũ yêu vợ Quyên<br><span class="last">nhìu lắm &lt;3</span></p>
-          <div class="main-heart" aria-hidden="true">♥</div>
-        </div>
-        <div class="wish-hint" aria-hidden="true">✦ Chạm vào trái tim để gửi điều ước ✦</div>
-      </section>
+<body class="lite">
+<main class="universe" aria-label="Galaxy Love của Vũ và Quyên">
+ <canvas id="sky" aria-hidden="true"></canvas>
+ <header class="header"><div class="kicker">✧ GALAXY LOVE 3D ✧</div><div class="subtitle">Trong cả thiên hà, anh chỉ chọn một người...</div></header>
+ <div class="stage-wrap">
+  <section id="scene" class="scene" tabindex="0" role="button" aria-label="Trái tim Vũ và Quyên; chạm để nhận lời yêu thương; kéo để xoay trái tim 3D">
+   <div class="halo" aria-hidden="true"></div><div class="orbit" aria-hidden="true"></div><div class="orbit two" aria-hidden="true"></div>
+   <div id="tilt" class="tilt">
+    <div class="beat" aria-hidden="true">
+     <div class="depth back"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
+     <div class="depth mid"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
+     <div class="depth front"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
+     <svg class="heart-svg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+      <defs><path id="path0"></path><path id="path1"></path><path id="path2"></path><path id="path3"></path><path id="path4"></path></defs>
+      <g class="ring ring-0"><use href="#path0" class="outline"></use><text font-size="17.5"><textPath href="#path0" id="text0"></textPath></text></g>
+      <g class="ring ring-1"><use href="#path1" class="outline"></use><text font-size="16"><textPath href="#path1" id="text1"></textPath></text></g>
+      <g class="ring ring-2"><use href="#path2" class="outline"></use><text font-size="14.8"><textPath href="#path2" id="text2"></textPath></text></g>
+      <g class="ring ring-3"><use href="#path3" class="outline"></use><text font-size="13.2"><textPath href="#path3" id="text3"></textPath></text></g>
+      <g class="ring ring-4"><use href="#path4" class="outline"></use><text font-size="11.8"><textPath href="#path4" id="text4"></textPath></text></g>
+     </svg>
     </div>
-
-    <canvas id="fx" aria-hidden="true"></canvas>
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <footer class="dock">
-      <div class="controls" role="group" aria-label="Điều khiển hiệu ứng">
-        <button class="control" id="musicButton" type="button" aria-pressed="false" title="Bật hoặc tắt nhạc nền tự tạo">
-          <span class="ico" aria-hidden="true">♫</span><span id="musicLabel">Bật nhạc</span>
-        </button>
-        <button class="control" id="motionButton" type="button" aria-pressed="false" title="Dùng cảm biến nghiêng của điện thoại">
-          <span class="ico" aria-hidden="true">◇</span><span id="motionLabel">Nghiêng 3D</span>
-        </button>
-        <button class="control" id="pauseButton" type="button" aria-pressed="false" title="Tạm dừng hoặc tiếp tục hiệu ứng">
-          <span class="ico" id="pauseIcon" aria-hidden="true">Ⅱ</span><span id="pauseLabel">Tạm dừng</span>
-        </button>
-      </div>
-      <div class="status" id="status">V5.0 • Galaxy Love • Đang tự tối ưu hiệu ứng</div>
-    </footer>
-  </main>
-
-  <script>
-  (() => {
-    'use strict';
-    const $ = (id) => document.getElementById(id);
-    const scene = $('scene'), tilt = $('tilt');
-    const sky = $('sky'), fx = $('fx');
-    const skyCtx = sky.getContext('2d', { alpha: true });
-    const fxCtx = fx.getContext('2d', { alpha: true });
-    const isReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isSmall = matchMedia('(max-width: 600px)').matches;
-    const hardware = navigator.hardwareConcurrency || 4;
-    const memory = navigator.deviceMemory || 4;
-    const initialLow = isReduced || (hardware <= 4 && memory <= 3);
-    const state = {
-      paused: false, audioOn: false, motionOn: false, sensorReceived: false,
-      quality: initialLow ? 0 : 1, targetFPS: isReduced ? 20 : (isSmall ? ((hardware >= 8 && memory >= 4) ? 60 : 30) : 60),
-      width: innerWidth, height: innerHeight, dpr: 1,
-      rx: 0, ry: 0, tx: 0, ty: 0, parallaxX: 0, parallaxY: 0,
-      lastRender: 0, lastCheck: 0, frames: 0, downgradeStreak: 0, upgradeStreak: 0
-    };
-    const stars = [], meteors = [], particles = [];
-    let toastTimer = 0, sensorTimer = 0, lastMeteor = 0;
-
-    // Năm đường trái tim SVG, mỗi đường chứa câu nói gốc.
-    const phrase = 'Vũ yêu vợ Quyên nhìu lắm <3  ✧  ';
-    const scales = [1.18, 1.015, .86, .705, .55];
-    const fontSizes = [17.5, 16, 14.8, 13.2, 11.8];
-    function heartD(scale) {
-      const segments = [];
-      for (let i = 0; i <= 560; i++) {
-        const t = i / 560 * Math.PI * 2;
-        const x = 16 * Math.pow(Math.sin(t), 3);
-        const y = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-        segments.push((i ? 'L' : 'M') + (400 + x*16.2*scale).toFixed(2) + ' ' + (393 - y*16.2*scale).toFixed(2));
-      }
-      return segments.join(' ') + ' Z';
-    }
-    const measure = document.createElement('canvas').getContext('2d');
-    scales.forEach((s,i) => {
-      const p = $('path'+i), t = $('text'+i);
-      p.setAttribute('d', heartD(s));
-      const len = p.getTotalLength();
-      measure.font = `700 ${fontSizes[i]}px Arial`;
-      const repeat = Math.max(1, Math.round(len / measure.measureText(phrase).width));
-      t.textContent = phrase.repeat(repeat);
-      t.setAttribute('textLength', (len - 8).toFixed(1));
-      t.setAttribute('lengthAdjust', 'spacing');
-    });
-
-    const rand = (a,b) => a + Math.random() * (b-a);
-    const clamp = (n,a,b) => Math.max(a, Math.min(b,n));
-    function starCount() { return (isSmall ? 110 : 185) * (state.quality === 0 ? .55 : state.quality === 2 ? 1.23 : 1) | 0; }
-    function resetStars() {
-      const count = starCount();
-      while (stars.length > count) stars.pop();
-      while (stars.length < count) {
-        stars.push({ x:Math.random(), y:Math.random(), z:rand(.25,1), radius:rand(.5,1.7),
-          phase: rand(0,6.28), speed:rand(.4,1.7), tint:Math.random() });
-      }
-    }
-    function resize() {
-      state.width = innerWidth; state.height = innerHeight;
-      const maxDpr = state.quality === 0 ? 1.15 : state.quality === 2 ? 2 : (isSmall ? 1.5 : 1.75);
-      state.dpr = Math.min(devicePixelRatio || 1, maxDpr);
-      [sky,fx].forEach((canvas) => {
-        canvas.width = Math.round(state.width * state.dpr);
-        canvas.height = Math.round(state.height * state.dpr);
-      });
-      if (skyCtx) skyCtx.setTransform(state.dpr,0,0,state.dpr,0,0);
-      if (fxCtx) fxCtx.setTransform(state.dpr,0,0,state.dpr,0,0);
-      resetStars();
-    }
-    let resizeTimer;
-    addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize,120); }, {passive:true});
-    resize();
-
-    function addMeteor(now) {
-      if (meteors.length >= (state.quality === 0 ? 1 : 3)) return;
-      const w = state.width, h = state.height;
-      meteors.push({ x:rand(w*.2,w*.95), y:rand(-h*.12,h*.4), vx:rand(-290,-450), vy:rand(200,310),
-        life:0, max:rand(.64,1.12), tail:rand(80,135), hue:Math.random() });
-      lastMeteor = now;
-    }
-    function renderSky(now, dt) {
-      if (!skyCtx) return;
-      const ctx = skyCtx, w=state.width, h=state.height;
-      ctx.clearRect(0,0,w,h);
-      const sec = now*.001;
-      const ox = state.ry * .7, oy = -state.rx * .7;
-      for (let i=0;i<stars.length;i++) {
-        const s=stars[i];
-        const x = (s.x*w + sec*s.z*1.65 + ox*s.z + w)%w;
-        const y = s.y*h + oy*s.z;
-        const alpha = (.20 + .53*(.5+.5*Math.sin(sec*s.speed*2+s.phase)))*s.z;
-        const color = s.tint > .90 ? `rgba(255,163,226,${alpha})` : s.tint > .77 ? `rgba(157,196,255,${alpha})` : `rgba(255,247,255,${alpha})`;
-        ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,s.radius*s.z,0,Math.PI*2);ctx.fill();
-        if (s.radius>1.43 && s.z>.71 && state.quality>0) {
-          ctx.fillStyle=`rgba(235,206,255,${alpha*.30})`;
-          ctx.fillRect(x-4,y-.3,8,.6); ctx.fillRect(x-.3,y-4,.6,8);
-        }
-      }
-      if (!isReduced && now-lastMeteor> (state.quality===0?8500:5400) && Math.random()<.036) addMeteor(now);
-      for (let i=meteors.length-1;i>=0;i--) {
-        const m=meteors[i];m.life+=dt;m.x+=m.vx*dt;m.y+=m.vy*dt;
-        const a=clamp(Math.min(m.life/.15,(m.max-m.life)/.22),0,1)*.85;
-        const nx=m.vx/Math.hypot(m.vx,m.vy),ny=m.vy/Math.hypot(m.vx,m.vy);
-        const gradient=ctx.createLinearGradient(m.x,m.y,m.x-nx*m.tail,m.y-ny*m.tail);
-        gradient.addColorStop(0,`rgba(255,250,255,${a})`);
-        gradient.addColorStop(.24,`rgba(${m.hue>.5?'255,112,215':'133,203,255'},${a*.68})`);
-        gradient.addColorStop(1,'rgba(169,131,255,0)');
-        ctx.strokeStyle=gradient;ctx.lineWidth=1.65;ctx.lineCap='round';
-        ctx.beginPath();ctx.moveTo(m.x,m.y);ctx.lineTo(m.x-nx*m.tail,m.y-ny*m.tail);ctx.stroke();
-        if (m.life>=m.max || m.x < -m.tail || m.y > h+m.tail) meteors.splice(i,1);
-      }
-    }
-
-    function heartParticle(ctx,x,y,size) {
-      const k=size/10;
-      ctx.beginPath();ctx.moveTo(x,y+3*k);
-      ctx.bezierCurveTo(x-11*k,y-4*k,x-7*k,y-11*k,x,y-5*k);
-      ctx.bezierCurveTo(x+7*k,y-11*k,x+11*k,y-4*k,x,y+3*k);
-      ctx.closePath();ctx.fill();
-    }
-    function burst(x,y) {
-      if (state.paused) return;
-      const n = state.quality === 0 ? 25 : state.quality === 2 ? 55 : 40;
-      const total = Math.min(n,200-particles.length);
-      for (let i=0;i<total;i++) {
-        const angle = rand(-Math.PI,Math.PI), speed = rand(42,200);
-        particles.push({ x,y,px:x,py:y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-32,
-          age:0,life:rand(.6,1.45),size:rand(1.9,5.4),hue:Math.random(),isHeart:Math.random()<.4,
-          spin:rand(-3.6,3.6), rotation:rand(-1,1) });
-      }
-    }
-    function renderParticles(dt) {
-      if (!fxCtx) return;
-      const ctx=fxCtx;
-      ctx.clearRect(0,0,state.width,state.height);
-      for (let i=particles.length-1;i>=0;i--) {
-        const p=particles[i];p.age+=dt;
-        if (p.age>=p.life) { particles.splice(i,1);continue; }
-        p.vx*=.985;p.vy+=25*dt;p.px=p.x;p.py=p.y;
-        p.x+=p.vx*dt;p.y+=p.vy*dt;
-        const opacity=Math.pow(1-p.age/p.life,1.3);
-        ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rotation+p.spin*p.age);
-        const color=p.hue>.7?`rgba(164,227,255,${opacity})`:p.hue>.3?`rgba(255,137,212,${opacity})`:`rgba(255,241,255,${opacity})`;
-        ctx.fillStyle=color; ctx.shadowColor=p.hue>.7?'#87e4ff':'#ff60c3';ctx.shadowBlur=8;
-        if(p.isHeart)heartParticle(ctx,0,0,p.size);
-        else{ctx.beginPath();ctx.arc(0,0,p.size*.52,0,Math.PI*2);ctx.fill();}
-        ctx.restore();
-      }
-    }
-
-    function toast(msg) {
-      const el=$('toast');el.textContent=msg;el.classList.add('show');
-      clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
-    }
-    scene.addEventListener('pointerdown',(event)=>{
-      const r=scene.getBoundingClientRect();
-      const x=clamp(event.clientX,r.left,r.right), y=clamp(event.clientY,r.top,r.bottom);
-      burst(x,y);
-    },{passive:true});
-    scene.addEventListener('keydown',(event)=>{
-      if(event.key==='Enter'||event.key===' '){event.preventDefault();const r=scene.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2);}
-    });
-    const movePointer=(x,y)=>{
-      if (state.motionOn && state.sensorReceived) return;
-      const r=scene.getBoundingClientRect();
-      state.ty=clamp(((x-r.left)/r.width-.5)*19,-11,11);
-      state.tx=clamp(-((y-r.top)/r.height-.5)*15,-9,9);
-    };
-    scene.addEventListener('pointermove',(event)=>movePointer(event.clientX,event.clientY),{passive:true});
-    scene.addEventListener('pointerleave',()=>{if(!state.sensorReceived){state.tx=0;state.ty=0;}},{passive:true});
-    scene.addEventListener('pointerup',()=>{if(!state.sensorReceived&&isSmall){state.tx=0;state.ty=0;}},{passive:true});
-
-    // Cảm biến nghiêng: yêu cầu HTTPS hoặc môi trường an toàn trên một số trình duyệt.
-    const motionButton=$('motionButton');
-    function onOrientation(e) {
-      if (e.beta==null || e.gamma==null) return;
-      state.sensorReceived=true;
-      state.ty=clamp(e.gamma*.38,-13,13);
-      state.tx=clamp((e.beta-45)*-.19,-10,10);
-    }
-    function stopMotion() {
-      state.motionOn=false;state.sensorReceived=false;state.tx=0;state.ty=0;
-      removeEventListener('deviceorientation',onOrientation);
-      clearTimeout(sensorTimer);
-      motionButton.setAttribute('aria-pressed','false');$('motionLabel').textContent='Nghiêng 3D';
-    }
-    motionButton.addEventListener('click',async()=>{
-      if(state.motionOn){stopMotion();toast('Đã tắt cảm biến nghiêng. Bạn vẫn có thể kéo để xoay tim.');return;}
-      if(!('DeviceOrientationEvent' in window)){toast('Trình duyệt không hỗ trợ cảm biến. Hãy kéo trái tim để xoay 3D.');return;}
-      try{
-        if(typeof DeviceOrientationEvent.requestPermission==='function'){
-          const permission=await DeviceOrientationEvent.requestPermission();
-          if(permission!=='granted'){toast('Chưa cấp quyền cảm biến. Bạn vẫn có thể kéo trái tim.');return;}
-        }
-        state.motionOn=true;state.sensorReceived=false;
-        addEventListener('deviceorientation',onOrientation,{passive:true});
-        motionButton.setAttribute('aria-pressed','true');$('motionLabel').textContent='Đang nghiêng';
-        toast('Hãy nghiêng điện thoại để xoay thiên hà ❤️');
-        sensorTimer=setTimeout(()=>{
-          if(state.motionOn&&!state.sensorReceived){stopMotion();toast('Chưa nhận được cảm biến. Thử mở trang bằng HTTPS hoặc kéo trái tim để xoay.');}
-        },3200);
-      }catch(e){stopMotion();toast('Không truy cập được cảm biến. Hãy thử HTTPS hoặc kéo để xoay.');}
-    });
-
-    // Nhạc nền êm dịu được TỰ TẠO qua Web Audio; không tải file nhạc hay thư viện.
-    const musicButton=$('musicButton');
-    let audioCtx=null, master=null, musicTimer=null, nextMusicTime=0, musicStep=0;
-    const chordNotes = [
-      [220.00,261.63,329.63], [196.00,246.94,293.66],
-      [174.61,220.00,261.63], [196.00,246.94,329.63]
-    ];
-    const melody = [0,2,1,2,0,1,2,1, 1,0,2,1,2,0,1,2];
-    function softTone(freq,time,duration,volume,kind='sine') {
-      if(!audioCtx||!master) return;
-      const osc=audioCtx.createOscillator(), gain=audioCtx.createGain(), filter=audioCtx.createBiquadFilter();
-      osc.type=kind;osc.frequency.setValueAtTime(freq,time);
-      filter.type='lowpass';filter.frequency.setValueAtTime(kind==='sine'?1350:820,time);
-      const end=time+duration;
-      gain.gain.setValueAtTime(.0001,time);
-      gain.gain.exponentialRampToValueAtTime(volume,time+.07);
-      gain.gain.exponentialRampToValueAtTime(.0001,end);
-      osc.connect(filter);filter.connect(gain);gain.connect(master);
-      osc.start(time);osc.stop(end+.04);
-      osc.onended=()=>{osc.disconnect();filter.disconnect();gain.disconnect();};
-    }
-    function playNext(time) {
-      const chord=chordNotes[Math.floor(musicStep/8)%4];
-      if(musicStep%8===0){chord.forEach((f,i)=>softTone(f/2,time,3.75,.072-(i*.011),'sine'));}
-      const picked=chord[melody[musicStep%16]%3];
-      softTone(picked*2,time, .73, .065,'sine');
-      if(musicStep%4===2)softTone(picked,time+.19,1.15,.027,'triangle');
-      musicStep++;
-    }
-    function musicScheduler(){
-      if(!audioCtx||!state.audioOn||audioCtx.state!=='running')return;
-      while(nextMusicTime<audioCtx.currentTime+.30){playNext(nextMusicTime);nextMusicTime+=.49;}
-    }
-    async function stopMusic(){
-      state.audioOn=false;clearInterval(musicTimer);musicTimer=null;
-      if(master&&audioCtx){master.gain.cancelScheduledValues(audioCtx.currentTime);master.gain.setTargetAtTime(.0001,audioCtx.currentTime,.08);}
-      musicButton.setAttribute('aria-pressed','false');$('musicLabel').textContent='Bật nhạc';
-    }
-    musicButton.addEventListener('click',async()=>{
-      if(state.audioOn){await stopMusic();return;}
-      try{
-        const AudioClass=window.AudioContext||window.webkitAudioContext;
-        if(!AudioClass){toast('Trình duyệt chưa hỗ trợ phát nhạc tự tạo.');return;}
-        if(!audioCtx){audioCtx=new AudioClass();master=audioCtx.createGain();master.gain.value=.0001;master.connect(audioCtx.destination);}
-        await audioCtx.resume();
-        if(audioCtx.state!=='running'){toast('Chạm lại để cấp quyền phát âm thanh.');return;}
-        state.audioOn=true;musicStep=0;nextMusicTime=audioCtx.currentTime+.10;
-        master.gain.cancelScheduledValues(audioCtx.currentTime);
-        master.gain.setTargetAtTime(.75,audioCtx.currentTime,.28);
-        musicScheduler();musicTimer=setInterval(musicScheduler,170);
-        musicButton.setAttribute('aria-pressed','true');$('musicLabel').textContent='Tắt nhạc';
-        toast('Đã bật giai điệu Galaxy Love ♫');
-      }catch(e){await stopMusic();toast('Không thể phát âm thanh trên trình duyệt này.');}
-    });
-
-    const pauseButton=$('pauseButton');
-    pauseButton.addEventListener('click',()=>{
-      state.paused=!state.paused;
-      state.lastCheck=0;state.frames=0;
-      document.body.classList.toggle('paused',state.paused);
-      pauseButton.setAttribute('aria-pressed',String(state.paused));
-      $('pauseLabel').textContent=state.paused?'Tiếp tục':'Tạm dừng';
-      $('pauseIcon').textContent=state.paused?'▶':'Ⅱ';
-      if(state.paused&&fxCtx)fxCtx.clearRect(0,0,state.width,state.height);
-    });
-
-    function refreshStatus(fps){
-      const level=state.quality===0?'Tiết kiệm pin':state.quality===1?'Cân bằng':'Mượt nâng cao';
-      $('status').textContent=`V5.0 · Galaxy Love · ${level}${fps?` · ~${fps} FPS`:''}`;
-    }
-    let statusFps=0;
-    function adaptiveQuality(now) {
-      if(!state.lastCheck)state.lastCheck=now;
-      if(now-state.lastCheck<3500)return;
-      const fps=state.frames*1000/(now-state.lastCheck);
-      statusFps=Math.round(fps);state.frames=0;state.lastCheck=now;
-      if(fps < state.targetFPS*.72){state.downgradeStreak++;state.upgradeStreak=0;}
-      else if(fps>state.targetFPS*.94){state.upgradeStreak++;state.downgradeStreak=0;}
-      else {state.downgradeStreak=0;state.upgradeStreak=0;}
-      if(state.downgradeStreak>=2 && state.quality>0){
-        state.quality--;state.targetFPS=Math.min(state.targetFPS,30);state.downgradeStreak=0;resize();
-      }else if(state.upgradeStreak>=4 && state.quality===0 && !initialLow && !isReduced){
-        state.quality=1;state.targetFPS=isSmall?((hardware >= 8 && memory >= 4) ? 60 : 30):60;state.upgradeStreak=0;resize();
-      }
-      refreshStatus(statusFps);
-    }
-    let lastTick=0;
-    function frame(now) {
-      requestAnimationFrame(frame);
-      if(document.hidden)return;
-      const targetGap=1000/state.targetFPS;
-      if(now-state.lastRender<targetGap*.9)return;
-      const dt=clamp((now-(lastTick||now))/1000,0,.055);
-      state.lastRender=now;lastTick=now;
-      if(state.paused){return;}
-      state.rx+=(state.tx-state.rx)*.075;
-      state.ry+=(state.ty-state.ry)*.075;
-      tilt.style.setProperty('--rx',state.rx.toFixed(2)+'deg');
-      tilt.style.setProperty('--ry',state.ry.toFixed(2)+'deg');
-      renderSky(now,dt);
-      renderParticles(dt);
-      state.frames++;adaptiveQuality(now);
-    }
-    requestAnimationFrame(frame);
-    refreshStatus();
-    document.addEventListener('visibilitychange',()=>{
-      state.lastRender=0;lastTick=0;state.frames=0;state.lastCheck=0;
-      if(audioCtx&&state.audioOn){
-        if(document.hidden)audioCtx.suspend().catch(()=>{});
-        else {audioCtx.resume().then(()=>{nextMusicTime=audioCtx.currentTime+.08;}).catch(()=>{});}
-      }
-    });
-    // Một vòng pháo hoa nhẹ khi vừa mở (không phát nhạc cho tới khi người dùng bấm).
-    if(!isReduced)setTimeout(()=>{
-      if(!state.paused&&!document.hidden){const r=scene.getBoundingClientRect();burst(r.left+r.width*.50,r.top+r.height*.45);}
-    },650);
-  })();
-  </script>
+    <div class="center">
+      <div class="forever">FOREVER &amp; ALWAYS</div>
+      <h1 class="names">Vũ <span>♥</span> Quyên</h1>
+      <div class="line"></div>
+      <p class="message">Vũ yêu vợ Quyên<br><span>nhìu lắm &lt;3</span></p>
+      <div class="center-heart" aria-hidden="true">♥</div>
+    </div>
+   </div>
+   <div class="hint">✦ Chạm để nhận lời yêu thương · Kéo để xoay 3D ✦</div>
+  </section>
+ </div>
+ <canvas id="fx" aria-hidden="true"></canvas>
+ <div class="words" id="words" aria-hidden="true"></div>
+ <div class="love-card" id="loveCard" role="status" aria-live="polite"><small>Vũ gửi vợ Quyên 💗</small><strong id="loveText"></strong></div>
+ <div class="toast" id="toast" role="status" aria-live="polite"></div>
+ <footer class="dock">
+  <div class="controls" role="group" aria-label="Điều khiển hiệu ứng">
+   <button class="control" id="musicButton" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">♫</span><span id="musicLabel">Bật nhạc</span></button>
+   <button class="control" id="motionButton" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">◇</span><span id="motionLabel">Nghiêng 3D</span></button>
+   <button class="control" id="qualityButton" type="button" aria-pressed="false"><span class="ico" aria-hidden="true">✧</span><span id="qualityLabel">Chế độ nhẹ</span></button>
+   <button class="control" id="pauseButton" type="button" aria-pressed="false"><span class="ico" id="pauseIcon" aria-hidden="true">Ⅱ</span><span id="pauseLabel">Tạm dừng</span></button>
+  </div>
+  <div class="status" id="status">Galaxy Love 3D · tối ưu cho PC và điện thoại</div>
+ </footer>
+</main>
+<script>
+(() => {
+ 'use strict';
+ const $ = id => document.getElementById(id);
+ const scene=$('scene'),tilt=$('tilt'),sky=$('sky'),fx=$('fx');
+ const skyCtx=sky.getContext('2d'),fxCtx=fx.getContext('2d');
+ const mobile=matchMedia('(pointer:coarse)').matches || innerWidth<650;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const state={lite:true,paused:false,hidden:document.hidden,w:0,h:0,dpr:1,
+   fps:30,rx:0,ry:0,tx:0,ty:0,last:0,raf:0,sensorOn:false,sensorSeen:false,
+   sensorZero:null,sensorAngle:null,audioOn:false,lastBurst:0};
+ let stars=[],particles=[],resizeTimer=0,toastTimer=0,cardTimer=0,sensorTimer=0,rect=null;
+ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+ const rand=(a,b)=>a+Math.random()*(b-a);
+ const wishes=[
+   'Quyên ơi, Vũ yêu em nhiều hơn mọi vì sao! ✨',
+   'Cảm ơn vợ Quyên đã xuất hiện trong cuộc đời anh. 💗',
+   'Dù cả thiên hà đổi thay, Vũ vẫn chọn Quyên. 🌌',
+   'Anh muốn nắm tay em đi qua mọi ngày bình yên. 🌷',
+   'Vũ thương vợ Quyên nhiều ơi là nhiều! 💞',
+   'Em là điều dịu dàng và đẹp nhất của anh. ♥',
+   'Mong nụ cười của Quyên luôn rực rỡ như những vì sao. ✨',
+   'Vũ hứa sẽ luôn trân trọng và yêu thương Quyên. 💖'
+ ];
+ const wordBits=['Yêu em ❤️','Vợ yêu ơi 💗','Vũ ♥ Quyên','Mãi bên nhau ✨','Thương em 💞','Mãi chọn em 🌷','Của riêng em 💖','Hạnh phúc nhé ✨'];
+ let wishIndex=0;
+ function heartD(scale){
+   const pieces=[];
+   for(let i=0;i<=168;i++){
+     const t=i/168*Math.PI*2, x=16*Math.sin(t)**3;
+     const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+     pieces.push((i?'L':'M')+(400+x*16.2*scale).toFixed(1)+' '+(393-y*16.2*scale).toFixed(1));
+   }
+   return pieces.join(' ')+' Z';
+ }
+ // Năm vòng chữ của thiết kế cũ, giản lược số điểm vẽ để nhẹ GPU.
+ const phrase='Vũ yêu vợ Quyên nhìu lắm <3  ✧  ';
+ const scales=[1.18,1.015,.86,.705,.55],sizes=[17.5,16,14.8,13.2,11.8];
+ const measure=document.createElement('canvas').getContext('2d');
+ scales.forEach((k,i)=>{
+   const path=$('path'+i),t=$('text'+i);path.setAttribute('d',heartD(k));
+   const length=path.getTotalLength();measure.font=`700 ${sizes[i]}px Arial`;
+   const repeat=Math.max(1,Math.round(length/measure.measureText(phrase).width));
+   t.textContent=phrase.repeat(repeat);
+   t.setAttribute('textLength',Math.max(1,length-8).toFixed(1));t.setAttribute('lengthAdjust','spacing');
+ });
+ const coreD=heartD(.67);
+ document.querySelectorAll('.core-path').forEach(p=>p.setAttribute('d',coreD));
+ function toast(text){const node=$('toast');node.textContent=text;node.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('show'),2600)}
+ function size(){
+   state.w=innerWidth;state.h=innerHeight;
+   // Tránh cấp phát canvas 4K trên máy màn hình DPI cao.
+   state.dpr=Math.min(devicePixelRatio||1,state.lite?1:1.35);
+   [sky,fx].forEach(c=>{c.width=Math.max(1,Math.floor(state.w*state.dpr));c.height=Math.max(1,Math.floor(state.h*state.dpr))});
+   skyCtx&&skyCtx.setTransform(state.dpr,0,0,state.dpr,0,0);
+   fxCtx&&fxCtx.setTransform(state.dpr,0,0,state.dpr,0,0);
+   const n=state.lite?(state.w<600?54:75):(state.w<600?90:140);
+   stars=Array.from({length:n},()=>({x:Math.random(),y:Math.random(),phase:rand(0,6.28),speed:rand(.25,.8),r:rand(.65,1.7),color:Math.random()}));
+   rect=scene.getBoundingClientRect();particles.length=0;
+ }
+ function quality(){
+   state.fps=state.lite?(mobile?25:30):(mobile?40:45);
+   document.body.classList.toggle('lite',state.lite);
+   document.body.classList.toggle('user-motion',!state.lite && reduced);
+   $('qualityLabel').textContent=state.lite?'Chế độ nhẹ':'Hiệu ứng đẹp';
+   $('qualityButton').setAttribute('aria-pressed',String(!state.lite));
+   $('status').textContent='Galaxy Love 3D · '+(state.lite?'tiết kiệm pin':'hiệu ứng đẹp')+' · '+state.fps+' FPS tối đa';
+   size();
+ }
+ function drawSky(t){
+   if(!skyCtx)return;
+   skyCtx.clearRect(0,0,state.w,state.h);
+   const sec=t/1000;
+   for(const st of stars){
+     skyCtx.globalAlpha=.27+.5*(.5+.5*Math.sin(sec*st.speed*2+st.phase));
+     skyCtx.fillStyle=st.color>.9?'#ffabeb':st.color>.78?'#b9c4ff':'#fff5fb';
+     const x=(st.x*state.w+sec*st.speed*1.2)%state.w;
+     skyCtx.fillRect(x,st.y*state.h,st.r,st.r);
+   }
+   skyCtx.globalAlpha=1;
+ }
+ function paintHeart(c,x,y,r){
+   c.beginPath();c.moveTo(x,y+r*.4);
+   c.bezierCurveTo(x-r*1.2,y-r*.4,x-r*.7,y-r*1.1,x,y-r*.5);
+   c.bezierCurveTo(x+r*.7,y-r*1.1,x+r*1.2,y-r*.4,x,y+r*.4);
+   c.closePath();c.fill();
+ }
+ function drawParticles(dt){
+   if(!fxCtx || !particles.length)return;
+   fxCtx.clearRect(0,0,state.w,state.h);
+   for(let i=particles.length-1;i>=0;i--){
+     const p=particles[i];p.age+=dt;
+     if(p.age>=p.life){particles.splice(i,1);continue}
+     p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=28*dt;
+     fxCtx.globalAlpha=1-p.age/p.life;
+     fxCtx.fillStyle=p.t>.68?'#a6e9ff':p.t>.3?'#ff97d8':'#fff2fd';
+     if(p.heart)paintHeart(fxCtx,p.x,p.y,p.r);else fxCtx.fillRect(p.x,p.y,p.r*.7,p.r*.7);
+   }
+   fxCtx.globalAlpha=1;
+   if(!particles.length)fxCtx.clearRect(0,0,state.w,state.h);
+ }
+ function popWords(x,y){
+   const parent=$('words');
+   while(parent.children.length>22)parent.firstChild.remove();
+   const count=state.lite?4:6;
+   for(let i=0;i<count;i++){
+     const node=document.createElement('span'),angle=2*Math.PI*(i/count)+rand(-.24,.24);
+     const distance=rand(state.w<600?68:90,state.w<600?123:177);
+     node.className='float-word';node.textContent=wordBits[(wishIndex+i)%wordBits.length];
+     node.style.setProperty('--x',x+'px');node.style.setProperty('--y',y+'px');
+     node.style.setProperty('--dx',(Math.cos(angle)*distance).toFixed(0)+'px');
+     node.style.setProperty('--dy',(Math.sin(angle)*distance-27).toFixed(0)+'px');
+     node.style.setProperty('--hx',(Math.cos(angle)*distance*.6).toFixed(0)+'px');
+     node.style.setProperty('--hy',((Math.sin(angle)*distance-27)*.6).toFixed(0)+'px');
+     node.style.setProperty('--dur',rand(1.65,2.3).toFixed(2)+'s');
+     parent.appendChild(node);node.addEventListener('animationend',()=>node.remove(),{once:true});
+   }
+   const ripple=document.createElement('div');ripple.className='ripple';
+   ripple.style.setProperty('--x',x+'px');ripple.style.setProperty('--y',y+'px');
+   parent.appendChild(ripple);ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
+ }
+ function burst(x,y){
+   if(state.paused || state.hidden)return;
+   const now=performance.now();if(now-state.lastBurst<220)return;
+   state.lastBurst=now;
+   const count=state.lite?26:48;
+   for(let i=0;i<count&&particles.length<130;i++){
+     const angle=rand(0,6.283),v=rand(40,200);
+     particles.push({x,y,vx:Math.cos(angle)*v,vy:Math.sin(angle)*v-34,age:0,
+       life:rand(.7,1.3),r:rand(2.8,6.5),t:Math.random(),heart:Math.random()<.68});
+   }
+   popWords(x,y);
+   $('loveText').textContent=wishes[wishIndex%wishes.length];wishIndex++;
+   $('loveCard').classList.add('show');clearTimeout(cardTimer);
+   cardTimer=setTimeout(()=>$('loveCard').classList.remove('show'),3100);
+   // Rung phản hồi rất ngắn nếu điện thoại có hỗ trợ, không bắt buộc.
+   if(navigator.vibrate&&!reduced)try{navigator.vibrate(16)}catch(_e){}
+   start();
+ }
+ function render(now){
+   state.raf=0;
+   if(state.hidden||state.paused)return;
+   start();
+   if(now-state.last<1000/state.fps-.75)return;
+   const dt=clamp((now-(state.last||now))/1000,0,.055);state.last=now;
+   const dx=state.tx-state.rx,dy=state.ty-state.ry;
+   if(Math.abs(dx)+Math.abs(dy)>.03){
+     state.rx+=dx*.18;state.ry+=dy*.18;
+     tilt.style.transform=`rotateX(${state.rx.toFixed(2)}deg) rotateY(${state.ry.toFixed(2)}deg)`;
+   }
+   drawSky(now);drawParticles(dt);
+ }
+ function start(){if(!state.raf&&!state.hidden&&!state.paused)state.raf=requestAnimationFrame(render)}
+ function stop(){if(state.raf)cancelAnimationFrame(state.raf);state.raf=0;state.last=0}
+ window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(size,140)},{passive:true});
+ let pointer=null;
+ scene.addEventListener('pointerdown',e=>{
+   if(e.button!==undefined&&e.button!==0)return;
+   pointer={x:e.clientX,y:e.clientY,moved:false};
+   if(scene.setPointerCapture)try{scene.setPointerCapture(e.pointerId)}catch(_e){}
+ },{passive:true});
+ scene.addEventListener('pointermove',e=>{
+   if(state.sensorOn && state.sensorSeen)return;
+   if(e.pointerType!=='mouse'&&!pointer)return;
+   if(pointer&&Math.hypot(e.clientX-pointer.x,e.clientY-pointer.y)>11)pointer.moved=true;
+   const r=rect||scene.getBoundingClientRect();
+   // Rê chuột trên PC hoặc kéo ngón tay trên điện thoại để xoay theo 2 trục.
+   state.ty=clamp(((e.clientX-r.left)/r.width-.5)*43,-23,23);
+   state.tx=clamp(-((e.clientY-r.top)/r.height-.5)*36,-19,19);
+ },{passive:true});
+ scene.addEventListener('pointerup',e=>{
+   if(pointer&&!pointer.moved)burst(e.clientX,e.clientY);
+   pointer=null;
+   if(!(state.sensorOn&&state.sensorSeen)&&e.pointerType!=='mouse'){state.tx=0;state.ty=0}
+ },{passive:true});
+ scene.addEventListener('pointercancel',()=>{pointer=null;if(!state.sensorSeen){state.tx=0;state.ty=0}},{passive:true});
+ scene.addEventListener('pointerleave',()=>{if(!pointer&&!state.sensorSeen){state.tx=0;state.ty=0}},{passive:true});
+ scene.addEventListener('keydown',e=>{
+   if(e.key==='Enter'||e.key===' '){e.preventDefault();const r=scene.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2)}
+ });
+ // Cảm biến định hướng: hiệu chỉnh tại thời điểm bật, có xử lý xoay ngang màn hình.
+ function angleNow(){return screen.orientation&&typeof screen.orientation.angle==='number'?screen.orientation.angle:(typeof window.orientation==='number'?window.orientation:0)}
+ function orientation(e){
+   if(!state.sensorOn||e.beta==null||e.gamma==null)return;
+   const angle=angleNow();let lr,ud;
+   if(angle===90||angle===-270){lr=e.beta;ud=-e.gamma}
+   else if(angle===270||angle===-90){lr=-e.beta;ud=e.gamma}
+   else if(angle===180||angle===-180){lr=-e.gamma;ud=-e.beta}
+   else{lr=e.gamma;ud=e.beta}
+   if(!state.sensorZero||state.sensorAngle!==angle){state.sensorZero={lr,ud};state.sensorAngle=angle}
+   state.sensorSeen=true;
+   state.ty=clamp((lr-state.sensorZero.lr)*.78,-24,24);
+   state.tx=clamp(-(ud-state.sensorZero.ud)*.65,-20,20);
+ }
+ function sensorOff(){
+   removeEventListener('deviceorientation',orientation);
+   clearTimeout(sensorTimer);state.sensorOn=false;state.sensorSeen=false;
+   state.sensorZero=null;state.tx=0;state.ty=0;
+   $('motionButton').setAttribute('aria-pressed','false');$('motionLabel').textContent='Nghiêng 3D';
+ }
+ // Android thường cho phép cảm biến tự hoạt động khi website chạy qua HTTPS.
+ // iPhone/iPad thường yêu cầu nhấn nút để cấp quyền; luôn giữ cách kéo tay dự phòng.
+ function autoSensor(){
+   if(!mobile||!isSecureContext||!('DeviceOrientationEvent' in window)||
+      typeof DeviceOrientationEvent.requestPermission==='function')return;
+   state.sensorOn=true;state.sensorZero=null;state.sensorSeen=false;
+   addEventListener('deviceorientation',orientation,{passive:true});
+   $('motionButton').setAttribute('aria-pressed','true');$('motionLabel').textContent='Đang nghiêng';
+   sensorTimer=setTimeout(()=>{if(state.sensorOn&&!state.sensorSeen)sensorOff()},4000);
+ }
+ $('motionButton').addEventListener('click',async()=>{
+   if(state.sensorOn){sensorOff();toast('Đã tắt cảm biến. Hãy kéo tim để xoay 3D.');return}
+   if(!('DeviceOrientationEvent' in window)) {toast('Thiết bị không hỗ trợ cảm biến; vẫn xoay được bằng tay.');return}
+   if(!isSecureContext){toast('Cảm biến cần mở website qua HTTPS. Bạn vẫn có thể kéo tim bằng tay.');return}
+   try{
+     if(typeof DeviceOrientationEvent.requestPermission==='function'){
+       const allowed=await DeviceOrientationEvent.requestPermission();
+       if(allowed!=='granted'){toast('Chưa cấp quyền cảm biến. Bạn vẫn có thể kéo tim.');return}
+     }
+     state.sensorOn=true;state.sensorSeen=false;state.sensorZero=null;
+     addEventListener('deviceorientation',orientation,{passive:true});
+     $('motionButton').setAttribute('aria-pressed','true');$('motionLabel').textContent='Đang nghiêng';
+     toast('Đã bật! Nghiêng điện thoại để xoay trái tim ❤️');
+     sensorTimer=setTimeout(()=>{
+       if(state.sensorOn&&!state.sensorSeen){sensorOff();toast('Không nhận được cảm biến. Thử HTTPS bằng Chrome/Safari.');}
+     },4200);
+   }catch(_e){sensorOff();toast('Trình duyệt không cho phép dùng cảm biến. Hãy thử HTTPS.');}
+ });
+ // Nhạc gốc tự tạo bằng Web Audio; phát sau khi người dùng bấm.
+ let audioCtx=null,master=null,musicTimer=null,step=0,nextNote=0;
+ const chords=[[220,261.63,329.63],[196,246.94,293.66],[174.61,220,261.63],[196,246.94,329.63]], melody=[0,2,1,2,0,1,2,1,1,0,2,1,2,0,1,2];
+ function tone(freq,time,duration,volume){
+   if(!audioCtx||!master)return;
+   const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+   osc.type='sine';osc.frequency.setValueAtTime(freq,time);
+   gain.gain.setValueAtTime(.0001,time);
+   gain.gain.exponentialRampToValueAtTime(volume,time+.06);
+   gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
+   osc.connect(gain);gain.connect(master);osc.start(time);osc.stop(time+duration+.02);
+   osc.onended=()=>{osc.disconnect();gain.disconnect()};
+ }
+ function schedule(){
+   if(!state.audioOn||state.paused||state.hidden||!audioCtx||audioCtx.state!=='running')return;
+   if(nextNote<audioCtx.currentTime-.5)nextNote=audioCtx.currentTime+.06;
+   let cycles=0;
+   while(nextNote<audioCtx.currentTime+.24&&cycles++<3){
+     const chord=chords[Math.floor(step/8)%4];
+     if(step%8===0)chord.forEach((f,i)=>tone(f/2,nextNote,2.3,.054-i*.008));
+     tone(chord[melody[step%16]],nextNote,.5,.057);
+     nextNote+=.52;step++;
+   }
+ }
+ function musicOff(){
+   state.audioOn=false;if(musicTimer){clearInterval(musicTimer);musicTimer=null}
+   if(master&&audioCtx){master.gain.cancelScheduledValues(audioCtx.currentTime);master.gain.setTargetAtTime(.0001,audioCtx.currentTime,.05)}
+   $('musicButton').setAttribute('aria-pressed','false');$('musicLabel').textContent='Bật nhạc';
+ }
+ $('musicButton').addEventListener('click',async()=>{
+   if(state.audioOn){musicOff();return}
+   try{
+     const A=window.AudioContext||window.webkitAudioContext;
+     if(!A){toast('Trình duyệt chưa hỗ trợ âm thanh.');return}
+     if(!audioCtx){audioCtx=new A();master=audioCtx.createGain();master.gain.value=.0001;master.connect(audioCtx.destination)}
+     await audioCtx.resume();if(audioCtx.state!=='running'){toast('Chạm lại để cấp quyền phát nhạc.');return}
+     state.audioOn=true;step=0;nextNote=audioCtx.currentTime+.08;
+     master.gain.cancelScheduledValues(audioCtx.currentTime);master.gain.setTargetAtTime(.65,audioCtx.currentTime,.15);
+     schedule();musicTimer=setInterval(schedule,200);
+     $('musicButton').setAttribute('aria-pressed','true');$('musicLabel').textContent='Tắt nhạc';
+     toast('Đã bật giai điệu Galaxy Love ♫');
+   }catch(_e){musicOff();toast('Không thể phát nhạc trên trình duyệt này.');}
+ });
+ $('qualityButton').addEventListener('click',()=>{
+   state.lite=!state.lite;quality();
+   toast(state.lite?'Đang tiết kiệm tài nguyên để giảm lag.':'Đã bật hiệu ứng đẹp.');
+ });
+ $('pauseButton').addEventListener('click',()=>{
+   state.paused=!state.paused;document.body.classList.toggle('paused',state.paused);
+   $('pauseButton').setAttribute('aria-pressed',String(state.paused));
+   $('pauseIcon').textContent=state.paused?'▶':'Ⅱ';$('pauseLabel').textContent=state.paused?'Tiếp tục':'Tạm dừng';
+   if(state.paused){stop();particles.length=0;fxCtx&&fxCtx.clearRect(0,0,state.w,state.h);
+     if(state.audioOn&&audioCtx)audioCtx.suspend().catch(()=>{});
+   } else {start();if(state.audioOn&&audioCtx)audioCtx.resume().then(()=>{nextNote=audioCtx.currentTime+.06}).catch(()=>{})}
+ });
+ document.addEventListener('visibilitychange',()=>{
+   state.hidden=document.hidden;
+   if(state.hidden)stop();else start();
+   if(state.audioOn&&audioCtx){
+     if(state.hidden)audioCtx.suspend().catch(()=>{});
+     else if(!state.paused)audioCtx.resume().then(()=>{nextNote=audioCtx.currentTime+.06}).catch(()=>{});
+   }
+ });
+ quality();start();autoSensor();
+ if(!skyCtx||!fxCtx)toast('Trình duyệt này không hỗ trợ Canvas. Vui lòng thử Chrome/Safari/Edge mới nhất.');
+ // Không tự bùng nổ khi tải trang: hiệu ứng lời thương chỉ kích hoạt khi chạm.
+})();
+</script>
 </body>
 </html>
