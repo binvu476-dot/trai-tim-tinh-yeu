@@ -367,7 +367,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    }catch(_e){sensorOff();toast('Trình duyệt không cho phép dùng cảm biến. Hãy thử HTTPS.');}
  });
 
- // ===== Nhạc MP3 (đổi tên file ở dòng bên dưới) =====
+ // ===== Nhạc nền SECRET.mp3: phát khi người dùng bấm =====
  const bgMusic = new Audio('SECRET.mp3');
  bgMusic.loop = true;
  bgMusic.volume = 0.7;
@@ -405,7 +405,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
      toast('Đã bật nhạc tình yêu Vũ ♥ Quyên ♫');
    }catch(_e){
      musicOff();
-     toast('Không phát được MP3. Đặt nhac.mp3 cạnh file HTML.');
+     toast('Không phát được MP3. Đặt SECRET.mp3 cùng thư mục với file HTML.');
    }
  });
 
@@ -417,16 +417,22 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    state.paused=!state.paused;document.body.classList.toggle('paused',state.paused);
    $('pauseButton').setAttribute('aria-pressed',String(state.paused));
    $('pauseIcon').textContent=state.paused?'▶':'Ⅱ';$('pauseLabel').textContent=state.paused?'Tiếp tục':'Tạm dừng';
-   if(state.paused){stop();particles.length=0;fxCtx&&fxCtx.clearRect(0,0,state.w,state.h);
-     if(state.audioOn&&audioCtx)audioCtx.suspend().catch(()=>{});
-   } else {start();if(state.audioOn&&audioCtx)audioCtx.resume().then(()=>{nextNote=audioCtx.currentTime+.06}).catch(()=>{})}
+   if(state.paused){
+     stop();
+     particles.length=0;
+     if(fxCtx)fxCtx.clearRect(0,0,state.w,state.h);
+     if(state.audioOn)bgMusic.pause();
+   }else{
+     start();
+     resumeMusic();
+   }
  });
  document.addEventListener('visibilitychange',()=>{
    state.hidden=document.hidden;
    if(state.hidden)stop();else start();
-   if(state.audioOn&&audioCtx){
-     if(state.hidden)audioCtx.suspend().catch(()=>{});
-     else if(!state.paused)audioCtx.resume().then(()=>{nextNote=audioCtx.currentTime+.06}).catch(()=>{});
+   if(state.audioOn){
+     if(state.hidden)bgMusic.pause();
+     else resumeMusic();
    }
  });
  quality();start();autoSensor();
