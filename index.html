@@ -100,8 +100,25 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
   <section id="scene" class="scene" tabindex="0" role="button" aria-label="Trái tim Vũ và Quyên; chạm để nhận lời yêu thương; kéo để xoay trái tim 3D">
    <div class="halo" aria-hidden="true"></div><div class="orbit" aria-hidden="true"></div><div class="orbit two" aria-hidden="true"></div>
    <div id="tilt" class="tilt">
-    <div class="beat" aria-hidden="true">
-     <div class="depth back"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
+     <div class="beat" aria-hidden="true">
+      <svg class="heart-body" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+       <defs>
+        <radialGradient id="heartBodyGradient" cx="46%" cy="30%" r="80%" fx="41%" fy="16%">
+         <stop offset="0" stop-color="#692a7e"/>
+         <stop offset=".38" stop-color="#471957"/>
+         <stop offset=".73" stop-color="#2a0d46"/>
+         <stop offset="1" stop-color="#4d155f"/>
+        </radialGradient>
+        <linearGradient id="heartHighlight" x1=".15" y1="0" x2=".8" y2="1">
+         <stop offset="0" stop-color="#ffadeb" stop-opacity=".46"/>
+         <stop offset=".44" stop-color="#df7bd9" stop-opacity=".14"/>
+         <stop offset="1" stop-color="#9b5bff" stop-opacity=".3"/>
+        </linearGradient>
+       </defs>
+       <path class="body-path" fill="url(#heartBodyGradient)" />
+       <path class="body-edge" fill="none" stroke="url(#heartHighlight)" stroke-width="3.5" />
+      </svg>
+      <div class="depth back"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
      <div class="depth mid"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
      <div class="depth front"><svg viewBox="0 0 800 800"><path class="core-path"></path></svg></div>
      <svg class="heart-svg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
@@ -174,19 +191,55 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    }
    return pieces.join(' ')+' Z';
  }
- // Năm vòng chữ của thiết kế cũ, giản lược số điểm vẽ để nhẹ GPU.
- const phrase='Vũ yêu vợ Quyên nhìu lắm <3  ✧  ';
- const scales=[1.18,1.015,.86,.705,.55],sizes=[17.5,16,14.8,13.2,11.8];
- const measure=document.createElement('canvas').getContext('2d');
- scales.forEach((k,i)=>{
-   const path=$('path'+i),t=$('text'+i);path.setAttribute('d',heartD(k));
-   const length=path.getTotalLength();measure.font=`700 ${sizes[i]}px Arial`;
-   const repeat=Math.max(1,Math.round(length/measure.measureText(phrase).width));
-   t.textContent=phrase.repeat(repeat);
-   t.setAttribute('textLength',Math.max(1,length-8).toFixed(1));t.setAttribute('lengthAdjust','spacing');
- });
- const coreD=heartD(.67);
- document.querySelectorAll('.core-path').forEach(p=>p.setAttribute('d',coreD));
+  // Giữ nguyên 5 vòng chữ dày như bản gốc. Tách 2 nhánh của mỗi vòng để
+  // chữ không đè lên nhau ở chỗ lõm trên và chóp nhọn phía dưới trái tim.
+  const phrase='Vũ yêu vợ Quyên nhìu lắm <3  ✧  ';
+  const scales=[1.265,1.105,.945,.785,.625];
+  const sizes=[18.3,17.0,15.8,14.4,13.2];
+  const svgNS='http://www.w3.org/2000/svg';
+  const defs=document.querySelector('.heart-svg defs');
+  const measure=document.createElement('canvas').getContext('2d');
+  function arcD(scale,from,to){
+    const pieces=[];
+    const n=104;
+    for(let j=0;j<=n;j++){
+      const t=from+(to-from)*j/n;
+      const x=16*Math.sin(t)**3;
+      const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t);
+      pieces.push((j?'L':'M')+(400+x*16.2*scale).toFixed(2)+' '+(393-y*16.2*scale).toFixed(2));
+    }
+    return pieces.join(' ');
+  }
+  scales.forEach((k,i)=>{
+    const path=$('path'+i), ring=document.querySelector('.ring-'+i);
+    path.setAttribute('d',heartD(k));
+    const oldText=ring.querySelector('text');
+    if(oldText)oldText.remove();
+    // Chừa một khoảng rất nhỏ ở hai nơi chữ thường va nhau. Vẫn lặp đầy chữ.
+    [[.092*Math.PI,.929*Math.PI], [1.071*Math.PI,1.908*Math.PI]].forEach(([from,to],side)=>{
+      const segment=document.createElementNS(svgNS,'path');
+      segment.id='heart-arc-'+i+'-'+side;
+      segment.setAttribute('d',arcD(k,from,to));
+      defs.appendChild(segment);
+      const length=segment.getTotalLength();
+      measure.font=`800 ${sizes[i]}px Arial`;
+      const naturalWidth=measure.measureText(phrase).width;
+      const repeats=Math.max(1,Math.round((length-5)/naturalWidth));
+      const node=document.createElementNS(svgNS,'text');
+      node.setAttribute('font-size',sizes[i]);
+      node.setAttribute('class','arc-letter');
+      const tp=document.createElementNS(svgNS,'textPath');
+      tp.setAttribute('href','#'+segment.id);
+      tp.setAttribute('textLength',Math.max(10,length-8).toFixed(2));
+      tp.setAttribute('lengthAdjust','spacing');
+      tp.textContent=phrase.repeat(repeats);
+      node.appendChild(tp);
+      ring.appendChild(node);
+    });
+  });
+  const coreD=heartD(1.06);
+  document.querySelectorAll('.core-path').forEach(p=>p.setAttribute('d',coreD));
+  document.querySelectorAll('.body-path,.body-edge').forEach(p=>p.setAttribute('d',heartD(1.235)));
  function toast(text){const node=$('toast');node.textContent=text;node.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('show'),2600)}
  function size(){
    state.w=innerWidth;state.h=innerHeight;
@@ -485,6 +538,50 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
   @media (max-width:600px) {
     .scene .hint { width:95%; max-width:95%; line-height:1.4; }
   }
+
+  /* Galaxy Love: đầy đặn như bản đầu nhưng chữ tách lớp và không đè chóp. */
+  .scene { width:min(96vw,745px,78svh); perspective:1050px; }
+  .heart-body {position:absolute;inset:0;width:100%;height:100%;overflow:visible;
+    transform:translateZ(-13px);filter:drop-shadow(0 0 14px #f56fc770)
+    drop-shadow(0 0 39px #a44bea69);opacity:.98;pointer-events:none;}
+  .heart-body .body-path {stroke:#f985d4;stroke-opacity:.24;stroke-width:3.8;}
+  .heart-body .body-edge {opacity:.62;}
+  .depth.back {transform:translateZ(-59px) scale(1.03);opacity:.14;}
+  .depth.mid {transform:translateZ(-36px) scale(1.018);opacity:.18;}
+  .depth.front {transform:translateZ(3px);opacity:.09;}
+  .heart-svg {transform:translateZ(35px);filter:drop-shadow(0 0 6px #ff5ac78f);}
+  .ring .outline {stroke-width:1.7;opacity:.52;}
+  .ring text {font-family:Arial,sans-serif;font-weight:800;letter-spacing:.045px;
+    stroke:#1b0b32;stroke-width:2px;paint-order:stroke fill;stroke-linejoin:round;}
+  .ring-0 text {opacity:1;fill:#fff3fd;}
+  .ring-1 text {opacity:.95;fill:#ffb9e9;}
+  .ring-2 text {opacity:.85;fill:#eccfff;}
+  .ring-3 text {opacity:.76;fill:#ffaddb;}
+  .ring-4 text {opacity:.65;fill:#bdeaff;}
+  .ring-0 .outline {stroke:#fca7e1;opacity:.64;}
+  .ring-1 .outline {stroke:#ff6fd1;opacity:.55;}
+  .ring-2 .outline {stroke:#bf86ff;opacity:.47;}
+  .ring-3 .outline {stroke:#ff83cc;opacity:.4;}
+  .ring-4 .outline {stroke:#8ddcfb;opacity:.36;}
+  .center {width:55%;top:48.8%;}
+  .center::before {inset:-10% -7%;border-radius:48%;background:
+    radial-gradient(ellipse at 50% 48%,#16071ffb 0%,#1b0b2aef 46%,#1d0b32c0 66%,#1b0b3240 82%,transparent 98%);}
+  .names {font-size:clamp(27px,5.8vw,55px);
+    text-shadow:0 0 7px #fff4ffd1,0 0 16px #ff4fbcc9,0 0 34px #a853fd9a;}
+  .forever {text-shadow:0 0 8px #f474c77a;}
+  .hint {bottom:105px;z-index:12;font-size:10px;text-shadow:0 0 8px #100520;}
+  .halo {inset:15%;background:radial-gradient(circle,#fb4cb12b 0%,#a645fa26 48%,transparent 75%);}
+  .orbit {border-color:#cc7eff29;}
+  @media(max-width:700px){
+    .scene{width:min(106vw,535px,73svh);}
+    .center{width:59%;}
+    .names{font-size:clamp(28px,8.2vw,41px);}
+    .hint{bottom:116px;font-size:9px;}
+  }
+  @media(max-height:650px){
+    .scene{width:min(90vw,70svh);}
+    .hint{bottom:74px;font-size:9px;}
+  }
 </style>
 <script>
 (() => {
@@ -516,8 +613,13 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     const href = node.getAttribute('href');
     if (href && href.startsWith('#')) node.setAttribute('href', href + '-back');
   });
-  // SVG gốc chỉ dùng href, không dùng xlink:href. Tránh selector sai cú pháp
-  // [xlink:href] làm cả module xoay bị dừng ngay khi tải trang.
+  // Cả các gradient và bộ lọc của mặt sau đều phải trỏ về ID riêng của nó.
+  backTilt.querySelectorAll('[fill],[stroke],[filter],[clip-path],[mask]').forEach(node => {
+    for (const attr of ['fill','stroke','filter','clip-path','mask']) {
+      const value=node.getAttribute(attr);
+      if(value && value.includes('url(#')) node.setAttribute(attr,value.replace(/url\(#([^)]*)\)/g,'url(#$1-back)'));
+    }
+  });
 
   tilt.before(shell);
   shell.appendChild(frontFace);
@@ -548,7 +650,10 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
   if (!ctx) return;
 
   const hint = scene.querySelector('.hint');
-  if (hint) hint.textContent = '✦ Chạm: lời thương · Kéo: nghiêng 3D · Vuốt ngang mạnh: xoay trục dọc ✦';
+  if (hint) {
+    hint.textContent = '✦ Chạm: lời thương · Kéo: nghiêng 3D · Vuốt ngang mạnh: xoay trục dọc ✦';
+    universe.appendChild(hint); // Đặt hướng dẫn ngoài tim để không chạm chóp dưới.
+  }
   scene.setAttribute('aria-label', 'Trái tim Vũ và Quyên; chạm để nhận lời yêu thương, kéo để nghiêng 3D, vuốt ngang nhanh để xoay quanh trục dọc rồi bung cánh hoa');
 
   const coarse = matchMedia('(pointer:coarse)').matches;
@@ -810,7 +915,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
     const recentSpeed=Math.abs(last.x-first.x)/seconds;
     const avgSpeed=Math.abs(dx)/Math.max(.04,totalTime/1000);
     // Cần có gia tốc rõ và tốc độ trung bình nhất định để tránh kéo chậm.
-    if(avgSpeed<230 || recentSpeed<315)return;
+    if(avgSpeed<(isMobile()?230:175) || recentSpeed<(isMobile()?315:205))return;
     spinNow(Math.max(avgSpeed,recentSpeed),Math.sign(dx));
   },{passive:true});
 
