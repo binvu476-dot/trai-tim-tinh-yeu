@@ -367,8 +367,59 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    }catch(_e){sensorOff();toast('Trình duyệt không cho phép dùng cảm biến. Hãy thử HTTPS.');}
  });
 
- // ===== Nhạc nền SECRET.mp3: phát khi người dùng bấm =====
- const bgMusic = new Audio('SECRET.mp3');
+ // ===== Nhạc nền: tự tạo bằng Web Audio để toàn bộ website nằm trong 1 file HTML =====
+ // Đây là giai điệu nhạc cụ gốc đơn giản, không dùng file MP3 hay kết nối internet.
+ // Các nút bật/tắt nhạc, tạm dừng và khôi phục giữ nguyên cơ chế phía dưới.
+ function createBuiltInMusic(){
+   let ctx=null,master=null,timer=null,next=0,step=0;
+   const music={loop:true,volume:.7,preload:'none'};
+   const AudioEngine=window.AudioContext||window.webkitAudioContext;
+   // Nhạc nền dịu nhẹ, tối ưu: chỉ lập lịch vài oscillator trong một khoảng ngắn.
+   const tune=[76,79,83,79,76,74,72,74,76,79,81,79,76,74,72,0,
+               74,76,79,76,74,72,71,72,74,76,79,76,74,72,71,0];
+   const chords=[[48,52,55],[45,48,52],[41,45,48],[43,47,50]];
+   const hz=n=>440*Math.pow(2,(n-69)/12);
+   function tone(note,when,length,amp,wave){
+     if(!note||!ctx||!master)return;
+     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
+     oscillator.type=wave;
+     oscillator.frequency.setValueAtTime(hz(note),when);
+     gain.gain.setValueAtTime(.0001,when);
+     gain.gain.exponentialRampToValueAtTime(Math.max(.0002,amp),when+.035);
+     gain.gain.exponentialRampToValueAtTime(.0001,when+length);
+     oscillator.connect(gain);gain.connect(master);
+     oscillator.start(when);oscillator.stop(when+length+.015);
+   }
+   function scheduleNotes(){
+     if(!ctx||!master)return;
+     while(next<ctx.currentTime+.22){
+       const pos=step%32, chord=chords[Math.floor(pos/8)%4];
+       if(pos%8===0){
+         tone(chord[0]-12,next,1.45,.11,'sine');
+         chord.forEach(n=>tone(n,next,1.35,.025,'sine'));
+       }
+       if(pos%2===0)tone(tune[pos],next,.49,.050,'triangle');
+       else tone(tune[pos],next,.28,.030,'sine');
+       next+=.34;step++;
+     }
+   }
+   music.play=async()=>{
+     if(!AudioEngine)throw new Error('Thiết bị không hỗ trợ Web Audio');
+     if(!ctx){
+       ctx=new AudioEngine();
+       master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+     }
+     await ctx.resume();
+     master.gain.setTargetAtTime(music.volume*.62,ctx.currentTime,.055);
+     if(!timer){next=ctx.currentTime+.02;scheduleNotes();timer=setInterval(scheduleNotes,85);}
+   };
+   music.pause=()=>{
+     if(timer){clearInterval(timer);timer=null;}
+     if(ctx&&master)master.gain.setTargetAtTime(0,ctx.currentTime,.024);
+   };
+   return music;
+ }
+ const bgMusic = createBuiltInMusic();
  bgMusic.loop = true;
  bgMusic.volume = 0.7;
  bgMusic.preload = 'none';
@@ -384,7 +435,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    if(!state.audioOn || state.paused || state.hidden)return;
    bgMusic.play().catch(()=>{
      musicOff();
-     toast('Không thể tiếp tục phát MP3. Kiểm tra file nhạc.');
+     toast('Không thể tiếp tục phát nhạc trên trình duyệt này.');
    });
  }
 
@@ -405,7 +456,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
      toast('Đã bật nhạc tình yêu Vũ ♥ Quyên ♫');
    }catch(_e){
      musicOff();
-     toast('Không phát được MP3. Đặt SECRET.mp3 cùng thư mục với file HTML.');
+     toast('Không phát được nhạc. Hãy thử Chrome, Safari hoặc Edge mới nhất.');
    }
  });
 
@@ -438,6 +489,306 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
  quality();start();autoSensor();
  if(!skyCtx||!fxCtx)toast('Trình duyệt này không hỗ trợ Canvas. Vui lòng thử Chrome/Safari/Edge mới nhất.');
  // Không tự bùng nổ khi tải trang: hiệu ứng lời thương chỉ kích hoạt khi chạm.
+})();
+</script>
+
+<!-- BỔ SUNG: Quẹt mạnh quay quán tính, cạch khi dừng, cánh hoa từ tâm.
+     Phần mã Galaxy Love phía trên được giữ nguyên. -->
+<style>
+  .spin-shell {
+    position:absolute;
+    inset:0;
+    transform-style:preserve-3d;
+    pointer-events:none;
+    transform-origin:50% 50%;
+  }
+  .spin-shell.spinning { will-change:transform; }
+  .petal-fx {
+    position:absolute;
+    inset:0;
+    z-index:8;
+    width:100%;
+    height:100%;
+    display:block;
+    pointer-events:none;
+  }
+  @media (max-width:600px) {
+    .scene .hint { width:95%; max-width:95%; line-height:1.4; }
+  }
+</style>
+<script>
+(() => {
+  'use strict';
+  // Mã bổ sung hoạt động độc lập, không sửa hàm/tính năng gốc.
+  const scene = document.getElementById('scene');
+  const tilt = document.getElementById('tilt');
+  const universe = document.querySelector('.universe');
+  if (!scene || !tilt || !universe) return;
+
+  // Lồng lớp xoay ngoài lớp nghiêng gốc: 2 hiệu ứng không ghi đè transform của nhau.
+  const shell = document.createElement('div');
+  shell.className = 'spin-shell';
+  shell.id = 'spinShell';
+  tilt.before(shell);
+  shell.appendChild(tilt);
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'petal-fx';
+  canvas.id = 'petalFx';
+  canvas.setAttribute('aria-hidden', 'true');
+  const oldFx = document.getElementById('fx');
+  oldFx.after(canvas);
+  const ctx = canvas.getContext('2d', {alpha:true});
+  if (!ctx) return;
+
+  const hint = scene.querySelector('.hint');
+  if (hint) hint.textContent = '✦ Chạm: lời yêu thương · Kéo: 3D · Quẹt mạnh: xoay và bung cánh hoa ✦';
+  scene.setAttribute('aria-label', 'Trái tim Vũ và Quyên; chạm để nhận lời yêu thương, kéo để nghiêng 3D, quẹt nhanh để xoay nhiều vòng và tung cánh hoa');
+
+  const coarse = matchMedia('(pointer:coarse)').matches;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const rand = (a, b) => a + Math.random() * (b-a);
+  const pinks = ['#ff79b9','#ff9ccf','#ffd0e4','#f9b1ff','#fff0f7','#ed73bc'];
+  let viewW = 0, viewH = 0, dpr = 1;
+  let pointer = null, spin = null, angle = 0, petals = [];
+  let raf = 0, lastTime = 0, lastPaint = 0, resizeTimer = 0;
+  let audioCtx = null;
+
+  const isMobile = () => coarse || innerWidth < 700;
+  const isPaused = () => document.hidden || document.body.classList.contains('paused');
+
+  function resize() {
+    viewW = innerWidth;
+    viewH = innerHeight;
+    dpr = Math.min(devicePixelRatio || 1,
+      document.body.classList.contains('lite') ? 1 : (isMobile() ? 1.25 : 1.5));
+    canvas.width = Math.max(1, Math.round(viewW*dpr));
+    canvas.height = Math.max(1, Math.round(viewH*dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize();
+
+  // Xin quyền âm thanh từ thao tác thật (cần thiết trên iPhone, Android, PC).
+  // Tạo hiệu ứng 'cạch' bằng Web Audio, không cần tải tệp âm thanh ngoài.
+  function unlockSound() {
+    try {
+      const AudioEngine = window.AudioContext || window.webkitAudioContext;
+      if (!AudioEngine) return;
+      if (!audioCtx) audioCtx = new AudioEngine();
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    } catch (_) { /* trình duyệt chặn âm: phần hình ảnh vẫn hoạt động */ }
+  }
+
+  function clickSound() {
+    if (!audioCtx || audioCtx.state !== 'running') return;
+    try {
+      const t = audioCtx.currentTime;
+      // Một tiếng gõ ngắn, có phần âm trầm và phần bật sắc.
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(710, t);
+      osc.frequency.exponentialRampToValueAtTime(170, t + .055);
+      gain.gain.setValueAtTime(.13, t);
+      gain.gain.exponentialRampToValueAtTime(.001, t + .075);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + .078);
+
+      const count = Math.max(1, Math.floor(audioCtx.sampleRate * .028));
+      const buffer = audioCtx.createBuffer(1, count, audioCtx.sampleRate);
+      const channel = buffer.getChannelData(0);
+      for (let i=0; i<count; i++) channel[i] = (Math.random()*2-1)*(1-i/count);
+      const noise = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const burstGain = audioCtx.createGain();
+      filter.type = 'highpass'; filter.frequency.value = 1100;
+      burstGain.gain.setValueAtTime(.095, t);
+      burstGain.gain.exponentialRampToValueAtTime(.001, t + .028);
+      noise.buffer = buffer;
+      noise.connect(filter); filter.connect(burstGain); burstGain.connect(audioCtx.destination);
+      noise.start(t); noise.stop(t+.03);
+    } catch (_) { /* không ảnh hưởng hoạt ảnh */ }
+  }
+
+  function flowerBloom() {
+    const r = scene.getBoundingClientRect();
+    const cx = r.left + r.width * .5;
+    const cy = r.top + r.height * .49;
+    const mobile = isMobile();
+    const count = reducedMotion ? 18 : (mobile ? 32 : 52);
+    // Thay vì tích lũy, dùng một đợt hoa mới để giới hạn bộ nhớ trên điện thoại.
+    petals.length = 0;
+    for (let i=0; i<count; i++) {
+      const theta = (i/count)*Math.PI*2 + rand(-.28,.28);
+      const speed = rand(mobile ? 90 : 105, mobile ? 205 : 255);
+      petals.push({
+        x:cx + rand(-3,3), y:cy + rand(-3,3),
+        vx:Math.cos(theta)*speed, vy:Math.sin(theta)*speed - rand(17,65),
+        angle:rand(0,Math.PI*2), spin:rand(-5.5,5.5),
+        size:rand(mobile?5:7,mobile?11:15),
+        life:rand(1.65,2.9), age:0,
+        color:pinks[i%pinks.length], sway:rand(0,Math.PI*2),
+        flutter:rand(5,11)
+      });
+    }
+    if (navigator.vibrate && !reducedMotion) {
+      try { navigator.vibrate(24); } catch (_) {}
+    }
+  }
+
+  function paintPetals(dt) {
+    ctx.clearRect(0,0,viewW,viewH);
+    for (let i=petals.length-1; i>=0; i--) {
+      const p = petals[i];
+      p.age += dt;
+      if (p.age >= p.life) { petals.splice(i,1); continue; }
+      const resistance = Math.exp(-.28*dt);
+      p.vx *= resistance;
+      p.vy += 110*dt;
+      p.x += (p.vx + Math.sin(p.age*p.flutter+p.sway)*18)*dt;
+      p.y += p.vy*dt;
+      p.angle += p.spin*dt;
+      const appear = Math.min(1,p.age/.12);
+      const disappear = Math.min(1,(p.life-p.age)/.62);
+      ctx.globalAlpha = Math.max(0, Math.min(appear, disappear))*.96;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.angle);
+      // Mỗi cánh hoa lật và rung riêng, tạo cảm giác bung và bay trong không gian.
+      ctx.scale(.65 + .35*Math.abs(Math.cos(p.age*p.flutter+p.sway)),1);
+      const s = p.size;
+      ctx.beginPath();
+      ctx.moveTo(0, s*.30);
+      ctx.bezierCurveTo(-s*1.12,-s*.23,-s*.76,-s*1.45,0,-s*1.72);
+      ctx.bezierCurveTo(s*.84,-s*1.5,s*1.05,-s*.28,0,s*.30);
+      ctx.closePath();
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,244,252,.35)';
+      ctx.lineWidth = .8;
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.globalAlpha=1;
+  }
+
+  function spinNow(velocity, direction) {
+    if (isPaused()) return;
+    unlockSound();
+    const turns = clamp(Math.round(velocity/480)+1, 2, 6);
+    // Khóa đích ở đúng một số vòng tròn để logo, chữ quay về tư thế ban đầu.
+    const aligned = Math.round(angle/360)*360;
+    const target = aligned + direction*turns*360;
+    spin = {
+      from:angle,
+      to:target,
+      elapsed:0,
+      duration:1.68 + turns*.48
+    };
+    shell.classList.add('spinning');
+    schedule();
+  }
+
+  function finishSpin() {
+    spin = null;
+    // Góc 0° tương đương tất cả bội của 360°, tránh tích lũy góc rất lớn.
+    angle = 0;
+    shell.style.transform = 'rotateZ(0deg)';
+    shell.classList.remove('spinning');
+    clickSound();
+    flowerBloom();
+  }
+
+  function updateSpin(dt) {
+    if (!spin) return;
+    spin.elapsed = Math.min(spin.duration, spin.elapsed+dt);
+    const u = spin.elapsed/spin.duration;
+    // Ease-out bậc 4: đầu quay rất nhanh, cuối chậm dần rồi dừng mềm.
+    const eased = 1-Math.pow(1-u,4);
+    angle = spin.from+(spin.to-spin.from)*eased;
+    shell.style.transform = `rotateZ(${angle.toFixed(2)}deg)`;
+    if (u >= 1) finishSpin();
+  }
+
+  function frame(now) {
+    raf = 0;
+    if (isPaused()) { lastTime=0; lastPaint=0; return; }
+    const frameMs = isMobile() ? 1000/35 : 1000/50;
+    if (lastPaint && now-lastPaint < frameMs) { schedule(); return; }
+    const dt = lastTime ? clamp((now-lastTime)/1000,0,.065) : 0;
+    lastTime = lastPaint = now;
+    updateSpin(dt);
+    if (petals.length) paintPetals(dt);
+    else ctx.clearRect(0,0,viewW,viewH);
+    if (spin || petals.length) schedule();
+    else {lastTime=0;lastPaint=0;}
+  }
+
+  function schedule() {
+    if (!raf && !isPaused() && (spin || petals.length)) raf = requestAnimationFrame(frame);
+  }
+  function suspend() {
+    if (raf) cancelAnimationFrame(raf);
+    raf=0;lastTime=0;lastPaint=0;
+  }
+
+  function record(e) {
+    if (!pointer || pointer.id !== e.pointerId) return;
+    const now = performance.now();
+    pointer.points.push({x:e.clientX,y:e.clientY,t:now});
+    while (pointer.points.length>2 && pointer.points[1].t < now-150) pointer.points.shift();
+    if (pointer.points.length>12) pointer.points.shift();
+  }
+
+  scene.addEventListener('pointerdown', e => {
+    if (e.button!==undefined && e.button!==0) return;
+    pointer = {
+      id:e.pointerId, startX:e.clientX, startY:e.clientY,
+      points:[{x:e.clientX,y:e.clientY,t:performance.now()}]
+    };
+    unlockSound();
+  }, {passive:true});
+
+  scene.addEventListener('pointermove', record, {passive:true});
+
+  scene.addEventListener('pointerup', e => {
+    if (!pointer || pointer.id!==e.pointerId) return;
+    record(e);
+    const p=pointer;
+    pointer=null;
+    const allDistance = Math.hypot(e.clientX-p.startX,e.clientY-p.startY);
+    const first=p.points[0], last=p.points[p.points.length-1];
+    const secs=Math.max(.016,(last.t-first.t)/1000);
+    const vx=(last.x-first.x)/secs, vy=(last.y-first.y)/secs;
+    const speed=Math.hypot(vx,vy);
+    // Quẹt đủ nhanh và đủ xa; chạm nhẹ/kéo chậm vẫn giữ đúng tác dụng gốc.
+    if (allDistance>=48 && speed>=560 && Math.hypot(last.x-first.x,last.y-first.y)>=25) {
+      const direction = Math.abs(vx)>=Math.abs(vy) ? Math.sign(vx) : -Math.sign(vy);
+      spinNow(speed,direction || 1);
+    }
+  }, {passive:true});
+
+  scene.addEventListener('pointercancel', () => {pointer=null;}, {passive:true});
+  // Người dùng bàn phím trên PC cũng có thể xoay, không ảnh hưởng Enter/Space gốc.
+  scene.addEventListener('keydown', e => {
+    if (e.key==='ArrowRight' || e.key==='ArrowLeft') {
+      e.preventDefault();
+      spinNow(1150,e.key==='ArrowRight'?1:-1);
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize,120);
+  }, {passive:true});
+  document.getElementById('qualityButton')?.addEventListener('click',resize);
+  document.getElementById('pauseButton')?.addEventListener('click', () => {
+    if (isPaused()) suspend(); else schedule();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) suspend(); else schedule();
+  });
 })();
 </script>
 </body>
