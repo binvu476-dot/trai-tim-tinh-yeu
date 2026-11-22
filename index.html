@@ -367,59 +367,8 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    }catch(_e){sensorOff();toast('Trình duyệt không cho phép dùng cảm biến. Hãy thử HTTPS.');}
  });
 
- // ===== Nhạc nền: tự tạo bằng Web Audio để toàn bộ website nằm trong 1 file HTML =====
- // Đây là giai điệu nhạc cụ gốc đơn giản, không dùng file MP3 hay kết nối internet.
- // Các nút bật/tắt nhạc, tạm dừng và khôi phục giữ nguyên cơ chế phía dưới.
- function createBuiltInMusic(){
-   let ctx=null,master=null,timer=null,next=0,step=0;
-   const music={loop:true,volume:.7,preload:'none'};
-   const AudioEngine=window.AudioContext||window.webkitAudioContext;
-   // Nhạc nền dịu nhẹ, tối ưu: chỉ lập lịch vài oscillator trong một khoảng ngắn.
-   const tune=[76,79,83,79,76,74,72,74,76,79,81,79,76,74,72,0,
-               74,76,79,76,74,72,71,72,74,76,79,76,74,72,71,0];
-   const chords=[[48,52,55],[45,48,52],[41,45,48],[43,47,50]];
-   const hz=n=>440*Math.pow(2,(n-69)/12);
-   function tone(note,when,length,amp,wave){
-     if(!note||!ctx||!master)return;
-     const oscillator=ctx.createOscillator(),gain=ctx.createGain();
-     oscillator.type=wave;
-     oscillator.frequency.setValueAtTime(hz(note),when);
-     gain.gain.setValueAtTime(.0001,when);
-     gain.gain.exponentialRampToValueAtTime(Math.max(.0002,amp),when+.035);
-     gain.gain.exponentialRampToValueAtTime(.0001,when+length);
-     oscillator.connect(gain);gain.connect(master);
-     oscillator.start(when);oscillator.stop(when+length+.015);
-   }
-   function scheduleNotes(){
-     if(!ctx||!master)return;
-     while(next<ctx.currentTime+.22){
-       const pos=step%32, chord=chords[Math.floor(pos/8)%4];
-       if(pos%8===0){
-         tone(chord[0]-12,next,1.45,.11,'sine');
-         chord.forEach(n=>tone(n,next,1.35,.025,'sine'));
-       }
-       if(pos%2===0)tone(tune[pos],next,.49,.050,'triangle');
-       else tone(tune[pos],next,.28,.030,'sine');
-       next+=.34;step++;
-     }
-   }
-   music.play=async()=>{
-     if(!AudioEngine)throw new Error('Thiết bị không hỗ trợ Web Audio');
-     if(!ctx){
-       ctx=new AudioEngine();
-       master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
-     }
-     await ctx.resume();
-     master.gain.setTargetAtTime(music.volume*.62,ctx.currentTime,.055);
-     if(!timer){next=ctx.currentTime+.02;scheduleNotes();timer=setInterval(scheduleNotes,85);}
-   };
-   music.pause=()=>{
-     if(timer){clearInterval(timer);timer=null;}
-     if(ctx&&master)master.gain.setTargetAtTime(0,ctx.currentTime,.024);
-   };
-   return music;
- }
- const bgMusic = createBuiltInMusic();
+ // ===== Nhạc nền SECRET.mp3: phát khi người dùng bấm =====
+ const bgMusic = new Audio('SECRET.mp3');
  bgMusic.loop = true;
  bgMusic.volume = 0.7;
  bgMusic.preload = 'none';
@@ -435,7 +384,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
    if(!state.audioOn || state.paused || state.hidden)return;
    bgMusic.play().catch(()=>{
      musicOff();
-     toast('Không thể tiếp tục phát nhạc trên trình duyệt này.');
+     toast('Không thể tiếp tục phát MP3. Kiểm tra file nhạc.');
    });
  }
 
@@ -456,7 +405,7 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
      toast('Đã bật nhạc tình yêu Vũ ♥ Quyên ♫');
    }catch(_e){
      musicOff();
-     toast('Không phát được nhạc. Hãy thử Chrome, Safari hoặc Edge mới nhất.');
+     toast('Không phát được MP3. Đặt SECRET.mp3 cùng thư mục với file HTML.');
    }
  });
 
