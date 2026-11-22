@@ -366,49 +366,49 @@ body.paused .beat,body.paused .halo,body.paused .center-heart,body.paused .float
      },4200);
    }catch(_e){sensorOff();toast('Trình duyệt không cho phép dùng cảm biến. Hãy thử HTTPS.');}
  });
- // Nhạc gốc tự tạo bằng Web Audio; phát sau khi người dùng bấm.
- let audioCtx=null,master=null,musicTimer=null,step=0,nextNote=0;
- const chords=[[220,261.63,329.63],[196,246.94,293.66],[174.61,220,261.63],[196,246.94,329.63]], melody=[0,2,1,2,0,1,2,1,1,0,2,1,2,0,1,2];
- function tone(freq,time,duration,volume){
-   if(!audioCtx||!master)return;
-   const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
-   osc.type='sine';osc.frequency.setValueAtTime(freq,time);
-   gain.gain.setValueAtTime(.0001,time);
-   gain.gain.exponentialRampToValueAtTime(volume,time+.06);
-   gain.gain.exponentialRampToValueAtTime(.0001,time+duration);
-   osc.connect(gain);gain.connect(master);osc.start(time);osc.stop(time+duration+.02);
-   osc.onended=()=>{osc.disconnect();gain.disconnect()};
- }
- function schedule(){
-   if(!state.audioOn||state.paused||state.hidden||!audioCtx||audioCtx.state!=='running')return;
-   if(nextNote<audioCtx.currentTime-.5)nextNote=audioCtx.currentTime+.06;
-   let cycles=0;
-   while(nextNote<audioCtx.currentTime+.24&&cycles++<3){
-     const chord=chords[Math.floor(step/8)%4];
-     if(step%8===0)chord.forEach((f,i)=>tone(f/2,nextNote,2.3,.054-i*.008));
-     tone(chord[melody[step%16]],nextNote,.5,.057);
-     nextNote+=.52;step++;
-   }
- }
+
+ // ===== Nhạc MP3 (đổi tên file ở dòng bên dưới) =====
+ const bgMusic = new Audio('nhac.mp3');
+ bgMusic.loop = true;
+ bgMusic.volume = 0.7;
+ bgMusic.preload = 'none';
+
  function musicOff(){
-   state.audioOn=false;if(musicTimer){clearInterval(musicTimer);musicTimer=null}
-   if(master&&audioCtx){master.gain.cancelScheduledValues(audioCtx.currentTime);master.gain.setTargetAtTime(.0001,audioCtx.currentTime,.05)}
-   $('musicButton').setAttribute('aria-pressed','false');$('musicLabel').textContent='Bật nhạc';
+   state.audioOn = false;
+   bgMusic.pause();
+   $('musicButton').setAttribute('aria-pressed','false');
+   $('musicLabel').textContent = 'Bật nhạc';
  }
+
+ function resumeMusic(){
+   if(!state.audioOn || state.paused || state.hidden)return;
+   bgMusic.play().catch(()=>{
+     musicOff();
+     toast('Không thể tiếp tục phát MP3. Kiểm tra file nhạc.');
+   });
+ }
+
  $('musicButton').addEventListener('click',async()=>{
-   if(state.audioOn){musicOff();return}
+   if(state.audioOn){musicOff();return;}
+   if(state.paused){
+     toast('Hãy nhấn Tiếp tục trước khi bật nhạc.');
+     return;
+   }
+
    try{
-     const A=window.AudioContext||window.webkitAudioContext;
-     if(!A){toast('Trình duyệt chưa hỗ trợ âm thanh.');return}
-     if(!audioCtx){audioCtx=new A();master=audioCtx.createGain();master.gain.value=.0001;master.connect(audioCtx.destination)}
-     await audioCtx.resume();if(audioCtx.state!=='running'){toast('Chạm lại để cấp quyền phát nhạc.');return}
-     state.audioOn=true;step=0;nextNote=audioCtx.currentTime+.08;
-     master.gain.cancelScheduledValues(audioCtx.currentTime);master.gain.setTargetAtTime(.65,audioCtx.currentTime,.15);
-     schedule();musicTimer=setInterval(schedule,200);
-     $('musicButton').setAttribute('aria-pressed','true');$('musicLabel').textContent='Tắt nhạc';
-     toast('Đã bật giai điệu Galaxy Love ♫');
-   }catch(_e){musicOff();toast('Không thể phát nhạc trên trình duyệt này.');}
+     await bgMusic.play();
+     state.audioOn = true;
+     if(state.hidden || state.paused)bgMusic.pause();
+
+     $('musicButton').setAttribute('aria-pressed','true');
+     $('musicLabel').textContent = 'Tắt nhạc';
+     toast('Đã bật nhạc tình yêu Vũ ♥ Quyên ♫');
+   }catch(_e){
+     musicOff();
+     toast('Không phát được MP3. Đặt nhac.mp3 cạnh file HTML.');
+   }
  });
+
  $('qualityButton').addEventListener('click',()=>{
    state.lite=!state.lite;quality();
    toast(state.lite?'Đang tiết kiệm tài nguyên để giảm lag.':'Đã bật hiệu ứng đẹp.');
